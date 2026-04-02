@@ -1,0 +1,13 @@
+.env
+.mcp.json
+src/roadmap.md
+src/guide.md
+src/fix.md
+.idea/
+.pycache_check/
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
