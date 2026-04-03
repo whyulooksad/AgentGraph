@@ -4,6 +4,7 @@ src/roadmap.md
 src/guide.md
 src/fix.md
 .idea/
+.playwright-mcp/
 .pycache_check/
 __pycache__/
 */__pycache__/
