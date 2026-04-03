@@ -14,7 +14,9 @@
       "focus_window",
       "get_accessibility_tree",
       "type_text",
-      "click_control"
+      "click_control",
+      "press_key",
+      "wait"
     ]
   }
 }

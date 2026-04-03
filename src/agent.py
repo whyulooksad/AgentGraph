@@ -157,20 +157,18 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         """执行前向子智能体共享 runtime state"""
         child._mcp_manager = self._mcp_manager
         child._memory_provider = self._memory_provider
-        child._skill_loader = self._skill_loader
-        child._skill_catalog = self._skill_catalog
-        child._skill_agent_name = self._skill_agent_name
+        if child._skill_loader is None and self._skill_loader is not None:
+            child._skill_loader = self._skill_loader
+        if child._skill_catalog is None and self._skill_catalog is not None:
+            child._skill_catalog = self._skill_catalog
+        if child._skill_agent_name is None and self._skill_agent_name is not None:
+            child._skill_agent_name = self._skill_agent_name
         if child._active_skill is None and self._active_skill is not None:
             child._active_skill = self._active_skill.for_child()
 
     def with_memory(self, provider: MemoryProvider | None) -> "Agent":
         """挂载 Memory Provider"""
         self._memory_provider = provider
-        return self
-
-    def with_skill(self, skill: Skill | None) -> "Agent":
-        """为当前智能体激活任务级 Skill"""
-        self._active_skill = skill
         return self
 
     def with_skill_loader(
@@ -185,18 +183,6 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         self._skill_agent_name = resolved_agent_name
         self._skill_catalog = loader.load_catalog(resolved_agent_name)
         return self
-
-    def with_skills(
-        self,
-        base_dir: str | Path,
-        *,
-        agent_name: str | None = None,
-    ) -> "Agent":
-        """Attach skills from one filesystem directory."""
-        return self.with_skill_loader(
-            SkillLoader(base_dir),
-            agent_name=agent_name,
-        )
 
     def _skill_catalog_text(self) -> str | None:
         """Return the skill catalog prompt shown before skill activation."""
@@ -355,7 +341,6 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
                 async with asyncio.TaskGroup() as tg:
                     for target in targets.values():
                         if isinstance(target, Agent):
-                            self._share_runtime_with_child(target)
                             task = tg.create_task(
                                 target({"messages": messages}, context=context)
                             )
@@ -463,7 +448,6 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
                 for target_name in sorted(targets):
                     target = targets[target_name]
                     if isinstance(target, Agent):
-                        self._share_runtime_with_child(target)
                         async for event in target._stream_graph(
                             params={"messages": messages},
                             context=context,
@@ -566,6 +550,31 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
             if self._is_tool_visible_for_skill(tool["function"]["name"])
         ]
         return visible_mcp_tools + self._builtin_tools()
+
+    def _is_tool_call_allowed(self, tool_name: str) -> bool:
+        """Return whether a tool call is allowed in the current runtime state."""
+        builtin_tool_names = {
+            tool["function"]["name"]
+            for tool in self._builtin_tools()
+            if tool["type"] == "function"
+        }
+        if tool_name in builtin_tool_names:
+            return True
+        return self._is_tool_visible_for_skill(tool_name)
+
+    def _blocked_tool_call_message(
+        self,
+        tool_call: ChatCompletionMessageToolCallUnionParam,
+    ) -> ChatCompletionMessageParam:
+        """Return a synthetic tool result when the model calls a hidden MCP tool."""
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call["id"],
+            "content": (
+                f"Tool `{tool_call['function']['name']}` is not visible in the current skill. "
+                "Choose or activate the correct skill first."
+            ),
+        }
 
     async def _execute_hooks(
         self,
@@ -875,6 +884,11 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
                 ]:
                     self.edges.add(Edge(source=self.name, target=known))
                 case _:
+                    if not self._is_tool_call_allowed(name):
+                        generated_messages.append(
+                            self._blocked_tool_call_message(tool_call)
+                        )
+                        continue
                     if self._tool_call_completed(messages, tool_call["id"]):
                         continue
                     tool_arguments = json.loads(tool_call["function"]["arguments"])

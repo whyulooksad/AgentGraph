@@ -133,7 +133,11 @@ class MCPManager:
 
     async def close(self):
         """关闭全部 MCP client"""
-        await self.exit_stack.aclose()
+        try:
+            await self.exit_stack.aclose()
+        except RuntimeError as exc:
+            if "cancel scope" not in str(exc):
+                raise
         self.mcp_clients = {}
         self._tools = {}
 

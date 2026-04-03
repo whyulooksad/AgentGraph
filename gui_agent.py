@@ -21,19 +21,22 @@ async def main() -> None:
         description="负责桌面环境相关任务，包括应用发现、启动、窗口操作与后续桌面自动化。",
         model="qwen-plus",
         instructions=(
-            "You are the desktop operations agent.\n"
-            "You are responsible for desktop-environment tasks only.\n"
-            "MCP servers may already be connected, but their tools are hidden until you activate a skill.\n"
-            "You must first choose the correct skill from your skill catalog.\n"
-            "After a skill is activated, you may only use the tools visible under that skill.\n"
-            "If a required desktop-control tool is unavailable, say clearly which next tool is missing.\n"
-            "Output in Chinese. Keep the answer concise, factual, and action-oriented."
+            "Handle desktop-operation tasks only.\n"
+            "Always choose a skill before making MCP tool calls.\n"
+            "Use only the tools visible under the active skill.\n"
+            "Do not invent missing desktop-control abilities.\n"
+            "If a required tool is unavailable, state the missing tool explicitly.\n"
+            "Respond in concise Chinese."
         ),
         mcpServers={
             "windows_env": {
                 "command": sys.executable,
                 "args": [str(ROOT / "tools" / "windows_env_tools.py"), "--mcp"],
-            }
+            },
+            "desktop_gui": {
+                "command": sys.executable,
+                "args": [str(ROOT / "tools" / "desktop_gui_tools.py"), "--mcp"],
+            },
         },
     ).with_skill_loader(skill_loader, agent_name="desktop_agent")
 
@@ -42,12 +45,11 @@ async def main() -> None:
         description="入口智能体，负责识别任务类型并转发给合适的领域智能体。",
         model="qwen-plus",
         instructions=(
-            "You are the entry agent for a multi-agent desktop assistant.\n"
-            "Route the task to the correct subagent.\n"
+            "Route tasks to the correct agent.\n"
             "If the task is about desktop operations, desktop applications, GUI control, "
-            "music playback, or future desktop automation, you must call desktop_agent.\n"
-            "Do not answer such tasks yourself.\n"
-            "After handing off, let the delegated agent finish the task."
+            "music playback, or desktop automation, call desktop_agent.\n"
+            "Do not solve desktop tasks yourself.\n"
+            "After handoff, let the delegated agent finish the task."
         ),
         nodes={desktop_agent},
     )
