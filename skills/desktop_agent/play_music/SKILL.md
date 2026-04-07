@@ -7,19 +7,15 @@ Use this skill when the user wants the desktop agent to play a song in a desktop
 ## Execution Rules
 
 1. Identify the target music application and resolve its executable path.
-2. Launch the application and make sure the correct window is available.
-3. Locate the search entry for the requested song.
-4. Use a keyboard shortcut when needed to focus the search entry.
-5. Enter the song title and submit the search.
-5. Select the correct result and start playback.
-6. Verify whether playback has really started.
-7. If any required desktop-control tool is unavailable, stop and report the missing tool clearly.
+2. Check whether the application exposes a URI scheme, protocol handler, or command-line entry that can open or play content directly.
+3. If a direct playback URI or command is available, use it and then verify whether the target process is running as expected.
+4. If only application launch is available, launch the application and report clearly that direct song playback control is still missing.
+5. If no usable protocol or command is available, stop and report the missing control capability explicitly.
 
 ## Constraints
 
 - Do not guess application paths.
 - Do not claim playback success without an explicit verification step.
-- Use `press_key` for shortcuts and navigation keys.
-- Use `type_text` for actual text input.
+- Prefer `query_uri_scheme`, `list_registered_uri_schemes`, `open_uri`, `launch_app`, and `list_processes`.
 - Prefer factual status updates over narrative explanations.
 - Keep the final answer concise and execution-oriented.

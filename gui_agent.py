@@ -23,7 +23,7 @@ async def main() -> None:
         instructions=(
             "Handle desktop-operation tasks only.\n"
             "Always choose a skill before making MCP tool calls.\n"
-            "Use only the tools visible under the active skill.\n"
+            "Use application protocols, URI schemes, and command-line control.\n"
             "Do not invent missing desktop-control abilities.\n"
             "If a required tool is unavailable, state the missing tool explicitly.\n"
             "Respond in concise Chinese."
@@ -33,9 +33,9 @@ async def main() -> None:
                 "command": sys.executable,
                 "args": [str(ROOT / "tools" / "windows_env_tools.py"), "--mcp"],
             },
-            "desktop_gui": {
+            "desktop_control": {
                 "command": sys.executable,
-                "args": [str(ROOT / "tools" / "desktop_gui_tools.py"), "--mcp"],
+                "args": [str(ROOT / "tools" / "desktop_control_tools.py"), "--mcp"],
             },
         },
     ).with_skill_loader(skill_loader, agent_name="desktop_agent")

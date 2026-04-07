@@ -177,7 +177,7 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         *,
         agent_name: str | None = None,
     ) -> "Agent":
-        """Attach one agent-scoped skill catalog."""
+        """挂载 agent 的 skill catalog"""
         resolved_agent_name = agent_name or self.name
         self._skill_loader = loader
         self._skill_agent_name = resolved_agent_name
@@ -185,7 +185,7 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         return self
 
     def _skill_catalog_text(self) -> str | None:
-        """Return the skill catalog prompt shown before skill activation."""
+        """返回 skill 激活前展示的 skill catalog 提示词"""
         if self._skill_catalog is None or self._active_skill is not None:
             return None
         lines = [
@@ -203,7 +203,7 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         return "\n".join(lines)
 
     def _activate_skill_tool(self) -> ChatCompletionFunctionToolParam | None:
-        """Return the builtin tool used to activate one skill."""
+        """返回用于激活 skill 的内置工具"""
         if self._skill_catalog is None:
             return None
         return {
@@ -234,13 +234,13 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
         return (settings.mcp_servers if settings is not None else {}) | self.mcp_servers
 
     def _can_current_turn_see_mcp_tools(self) -> bool:
-        """Return whether MCP tools should be visible in this turn."""
+        """返回本轮交互中 MCP工具 是否应可见"""
         if self._skill_catalog is None:
             return True
         return self._active_skill is not None
 
     def _is_tool_visible_for_skill(self, tool_name: str) -> bool:
-        """Check whether an MCP tool is visible under the active skill."""
+        """检查 MCP 工具是否在当前激活的 skill 下可见"""
         if not self._can_current_turn_see_mcp_tools():
             return False
         if self._active_skill is None:
@@ -342,7 +342,7 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
                     for target in targets.values():
                         if isinstance(target, Agent):
                             task = tg.create_task(
-                                target({"messages": messages}, context=context)
+                                self._run_agent_node(target, messages, context)
                             )
                         elif isinstance(target, Tool):
                             task = tg.create_task(
@@ -448,6 +448,12 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
                 for target_name in sorted(targets):
                     target = targets[target_name]
                     if isinstance(target, Agent):
+                        await self._execute_hooks(
+                            "on_handoff",
+                            messages,
+                            context,
+                            to_agent=target,
+                        )
                         async for event in target._stream_graph(
                             params={"messages": messages},
                             context=context,
@@ -515,6 +521,21 @@ class Agent(Node[CompletionCreateParams, MessagesState]):
             tool_name=tool.name,
         )
         return {"messages": [result_to_message(tool.name, result)]}
+
+    async def _run_agent_node(
+        self,
+        target: "Agent",
+        messages: list[ChatCompletionMessageParam],
+        context: dict[str, Any],
+    ) -> MessagesState:
+        """触发 handoff hook,执行下游 agent"""
+        await self._execute_hooks(
+            "on_handoff",
+            messages,
+            context,
+            to_agent=target,
+        )
+        return await target({"messages": messages}, context=context)
 
     def _builtin_tools(self) -> list[ChatCompletionFunctionToolParam]:
         """返回当前 Agent 默认可见的 graph 管理工具"""
