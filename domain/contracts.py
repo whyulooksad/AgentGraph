@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Story2Proposal 的 contract 构建与修补辅助函数。
+
+这个模块负责把高层 blueprint 转成后续写作、评审、渲染阶段可以直接执
+行的 manuscript contract。
+"""
+
 from copy import deepcopy
 from typing import Any
 
@@ -17,6 +23,7 @@ from schemas import (
 
 
 def slugify(value: str) -> str:
+    """把自由文本转成稳定的标识符风格 token。"""
     value = value.lower().strip()
     sanitized = "".join(char if char.isalnum() else "_" for char in value)
     while "__" in sanitized:
@@ -28,6 +35,7 @@ def initialize_contract(
     story: ResearchStory,
     blueprint: ManuscriptBlueprint,
 ) -> ManuscriptContract:
+    """根据 story 和 blueprint 构造初始 manuscript contract。"""
     section_lookup = {plan.section_id: plan for plan in blueprint.section_plans}
     sections = [
         SectionContract(
@@ -123,6 +131,7 @@ def trim_blueprint_to_sections(
     blueprint: ManuscriptBlueprint,
     active_sections: list[str],
 ) -> ManuscriptBlueprint:
+    """把 blueprint 裁剪到更小的 active section 子集。"""
     allowed = set(active_sections)
     section_plans = [
         plan for plan in blueprint.section_plans if plan.section_id in allowed
@@ -145,6 +154,7 @@ def trim_blueprint_to_sections(
 
 
 def apply_contract_patches(contract: dict[str, Any], patches: list[dict[str, Any]]) -> dict[str, Any]:
+    """把结构化 review patch 直接应用到 contract payload 上。"""
     for patch in [ContractPatch.model_validate(item) for item in patches]:
         if patch.patch_type == "append_glossary":
             if patch.value not in contract["glossary"]:
@@ -165,6 +175,8 @@ def apply_contract_patches(contract: dict[str, Any], patches: list[dict[str, Any
                     section["required_visual_ids"].append(patch.value)
                     break
         elif patch.patch_type == "mark_claim_verified":
+            # 有些 evaluator 仍然返回 claim_text 而不是标准化后的
+            # claim_id，这里兼容两种形态。
             for claim in contract["claim_evidence_links"]:
                 if claim["claim_id"] == patch.target_id or claim["claim_text"] == patch.target_id:
                     claim["verified"] = patch.value.lower() in {
@@ -180,6 +192,7 @@ def apply_contract_patches(contract: dict[str, Any], patches: list[dict[str, Any
 
 
 def snapshot_contract(context: dict[str, Any]) -> dict[str, Any] | None:
+    """返回当前 contract 的一份脱离引用的拷贝。"""
     contract = context.get("contract")
     if contract is None:
         return None

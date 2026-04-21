@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+"""Story2Proposal 的执行期 contract 模型。
+
+这一层把 blueprint 进一步收敛成可执行、可追踪、可校验的稿件约束，用于
+后续写作、评审、修订和渲染阶段。
+"""
+
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, Field
 
 
 class StyleGuide(BaseModel):
+    """整篇稿件共享的全局风格约束。"""
     tone: str = "scientific"
     citation_style: str = "author-year placeholder"
     section_style: str = "structured"
@@ -13,6 +20,7 @@ class StyleGuide(BaseModel):
 
 
 class SectionContract(BaseModel):
+    """执行期单个章节的写作 contract。"""
     section_id: str
     title: str
     purpose: str
@@ -27,6 +35,7 @@ class SectionContract(BaseModel):
 
 
 class VisualArtifact(BaseModel):
+    """执行期单个视觉资产的 contract 表达。"""
     artifact_id: str
     kind: str
     label: str
@@ -39,6 +48,7 @@ class VisualArtifact(BaseModel):
 
 
 class CitationSlot(BaseModel):
+    """执行期单个引用位对象。"""
     citation_id: str
     citation_key: str
     title: str
@@ -48,6 +58,7 @@ class CitationSlot(BaseModel):
 
 
 class ClaimEvidenceLink(BaseModel):
+    """claim 与 supporting evidence 的绑定关系。"""
     claim_id: str
     claim_text: str
     evidence_ids: list[str] = Field(default_factory=list)
@@ -56,6 +67,7 @@ class ClaimEvidenceLink(BaseModel):
 
 
 class ValidationRule(BaseModel):
+    """contract 内建的一条校验规则。"""
     rule_id: str
     rule_type: str
     description: str
@@ -64,6 +76,7 @@ class ValidationRule(BaseModel):
 
 
 class RevisionRecord(BaseModel):
+    """contract 在运行中的一条修订记录。"""
     stage: str
     agent: str
     summary: str
@@ -74,6 +87,7 @@ class RevisionRecord(BaseModel):
 
 
 class ManuscriptContract(BaseModel):
+    """整篇稿件在执行期的根 contract 对象。"""
     contract_id: str
     version: int = 1
     paper_title: str | None = None

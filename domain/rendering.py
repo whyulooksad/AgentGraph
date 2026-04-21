@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+"""Story2Proposal 的最终稿渲染辅助函数。
+
+这个模块负责把累积好的 contract、draft 和 refiner 产物组织成可输出的
+markdown 与 LaTeX 稿件。
+"""
+
 from typing import Any
 
 from schemas import RenderedManuscript
 
 
 def build_bibliography_block(context: dict[str, Any]) -> str:
+    """把 contract 里的 citation slot 渲染成 markdown 参考文献列表。"""
     contract = context.get("contract") or {}
     lines = []
     for item in contract.get("citations", []):
@@ -25,6 +32,7 @@ def render_latex_from_markdown(
     bibliography: str,
     abstract_override: str | None,
 ) -> str:
+    """根据当前稿件状态构造一个轻量 LaTeX scaffold。"""
     body: list[str] = [
         r"\documentclass{article}",
         r"\usepackage[utf8]{inputenc}",
@@ -49,6 +57,7 @@ def render_latex_from_markdown(
 
 
 def render_markdown_manuscript(context: dict[str, Any]) -> RenderedManuscript:
+    """组装最终 markdown 稿件及其对应的 LaTeX 版本。"""
     contract = context.get("contract") or {}
     drafts = context.get("drafts") or {}
     sections = []
@@ -67,6 +76,8 @@ def render_markdown_manuscript(context: dict[str, Any]) -> RenderedManuscript:
             warnings.append(f"Missing draft for section {section['section_id']}")
             continue
         content = draft["content"]
+        # refiner 可以单独给出一版更收敛的 abstract，而不用重写
+        # 其他 section draft。
         if section["section_id"] == "abstract" and abstract_override:
             content = abstract_override
         if section["section_id"] in refiner_output.get("section_notes", {}):

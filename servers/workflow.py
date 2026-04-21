@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+"""Story2Proposal 应用层 Hook / MCP 适配层。
+
+这一层负责把 Agent 的自然语言输出转成结构化状态更新，并把
+review、render 这类应用动作接入整个图执行流程。
+
+这个文件不承载业务本体，它的职责是把 runtime Hook 传进来的
+`messages` / `context` / `agent` 转换成对 domain 层的调用：
+
+- 从消息历史里提取当前 Agent 的最新输出
+- 解析成应用层 schema
+- 调用 domain 更新共享 context
+- 把更新后的 context 返回给 runtime
+"""
+
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -33,6 +47,7 @@ def _latest_agent_message(
     messages: list[dict[str, Any]],
     agent_name: str | None,
 ) -> str:
+    """返回指定 Agent 最近一次 assistant 文本输出。"""
     for message in reversed(messages):
         if message.get("role") != "assistant":
             continue
@@ -45,6 +60,7 @@ def _latest_agent_message(
 
 
 def _agent_name(agent: dict[str, Any] | None) -> str | None:
+    """从 Hook 传入的 agent 元数据里取出名称。"""
     return (agent or {}).get("name")
 
 
@@ -53,6 +69,7 @@ def _parse_agent_output(
     agent: dict[str, Any] | None,
     schema: type[Any],
 ) -> Any:
+    """提取当前 Agent 的最新输出，并按指定 schema 解析。"""
     return parse_model(_latest_agent_message(messages, _agent_name(agent)), schema)
 
 
@@ -61,6 +78,7 @@ def _store_feedback(
     evaluator_type: str,
     feedback: EvaluationFeedback,
 ) -> dict[str, Any]:
+    """把 evaluator 反馈写入当前章节的 review bucket。"""
     if feedback.evaluator_type != evaluator_type:
         feedback.evaluator_type = evaluator_type
     append_review(context, feedback)
@@ -73,10 +91,12 @@ async def capture_architect_output(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """在 architect 完成后写入 blueprint 和初始 contract。"""
     blueprint = _parse_agent_output(messages, agent, ManuscriptBlueprint)
     story = ResearchStory.model_validate(context["story"])
     active_sections = story.metadata.get("active_sections")
     if isinstance(active_sections, list) and active_sections:
+        # demo story 可以限制实际参与写作的章节范围。
         blueprint = trim_blueprint_to_sections(
             blueprint,
             [str(section_id) for section_id in active_sections],
@@ -92,6 +112,7 @@ async def capture_section_writer_output(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """在 section_writer 完成后保存当前章节草稿。"""
     draft = _parse_agent_output(messages, agent, SectionDraft)
     save_section_draft(context, draft)
     return context
@@ -103,6 +124,7 @@ def _capture_feedback(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """提取某个 evaluator 的输出并写回统一 review 结构。"""
     feedback = _parse_agent_output(messages, agent, EvaluationFeedback)
     return _store_feedback(context, evaluator_type, feedback)
 
@@ -113,6 +135,7 @@ async def capture_reasoning_feedback(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """保存 reasoning evaluator 的反馈。"""
     return _capture_feedback("reasoning", messages, context, agent)
 
 
@@ -122,6 +145,7 @@ async def capture_structure_feedback(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """保存 structure evaluator 的反馈。"""
     return _capture_feedback("structure", messages, context, agent)
 
 
@@ -131,6 +155,7 @@ async def capture_visual_feedback(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """保存 visual evaluator 的反馈。"""
     return _capture_feedback("visual", messages, context, agent)
 
 
@@ -140,8 +165,10 @@ async def apply_review_cycle(
     messages: list[dict[str, Any]] | None = None,
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """在 review_controller 启动前聚合评审结果并推进章节状态。"""
     del messages, agent
     apply_review_cycle_impl(context)
+    # 评审结果会直接影响后续 prompt 中可见的上下文视图。
     refresh_prompt_views(context)
     persist_run_state(context)
     return context
@@ -153,6 +180,7 @@ async def capture_refiner_output(
     context: dict[str, Any],
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """保存 refiner 输出的全局润色结果。"""
     output = _parse_agent_output(messages, agent, RefinerOutput)
     store_refiner_output(context, output)
     return context
@@ -164,6 +192,7 @@ async def render_and_finalize(
     messages: list[dict[str, Any]] | None = None,
     agent: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """在 renderer 启动前直接生成最终 markdown / latex 稿件。"""
     del messages, agent
     rendered = render_markdown_manuscript(context)
     store_render_output(context, rendered)
@@ -171,4 +200,5 @@ async def render_and_finalize(
 
 
 if __name__ == "__main__":
+    """以 stdio MCP server 方式启动应用层 workflow 入口。"""
     server.run()

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Story2Proposal 的共享状态辅助函数。
+
+这个模块负责定义应用层共享 `context` 的基本形状，刷新给 prompt
+直接使用的投影视图，并把中间产物与最终产物落盘。
+"""
+
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -37,6 +43,7 @@ def build_initial_context(
     *,
     max_rewrite_per_section: int = 2,
 ) -> dict[str, Any]:
+    """为一次 Story2Proposal 运行创建初始共享 `context`。"""
     context: dict[str, Any] = {
         "run_id": output_dir.name,
         "story": story.model_dump(mode="json"),
@@ -62,6 +69,7 @@ def build_initial_context(
 
 
 def persist_run_state(context: dict[str, Any]) -> None:
+    """把当前运行快照和中间产物持久化到输出目录。"""
     output_dir_raw = context.get("artifacts", {}).get("output_dir")
     if not output_dir_raw:
         return
@@ -112,6 +120,7 @@ def persist_run_state(context: dict[str, Any]) -> None:
 
 
 def build_run_summary(context: dict[str, Any]) -> dict[str, Any]:
+    """构造一个适合 runner 最终返回的精简摘要。"""
     runtime = context.get("runtime", {})
     rendered = context.get("artifacts", {}).get("rendered", {})
     output_dir = context.get("artifacts", {}).get("output_dir")
@@ -127,6 +136,7 @@ def build_run_summary(context: dict[str, Any]) -> dict[str, Any]:
 
 
 def persist_run_outputs(context: dict[str, Any]) -> dict[str, Any]:
+    """持久化最终运行元数据，并返回对应的摘要结果。"""
     output_dir_raw = context.get("artifacts", {}).get("output_dir")
     if not output_dir_raw:
         return build_run_summary(context)
@@ -146,6 +156,7 @@ def persist_run_outputs(context: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_current_section_contract(context: dict[str, Any]) -> dict[str, Any] | None:
+    """返回当前正在处理章节对应的 contract 条目。"""
     contract = context.get("contract") or {}
     current_section_id = context.get("runtime", {}).get("current_section_id")
     for section in contract.get("sections", []):
@@ -155,11 +166,13 @@ def get_current_section_contract(context: dict[str, Any]) -> dict[str, Any] | No
 
 
 def get_current_draft(context: dict[str, Any]) -> dict[str, Any] | None:
+    """返回当前章节最新保存的 draft。"""
     current_section_id = context.get("runtime", {}).get("current_section_id")
     return context.get("drafts", {}).get(current_section_id)
 
 
 def get_current_reviews(context: dict[str, Any]) -> list[dict[str, Any]]:
+    """返回当前章节已经收集到的全部 evaluator 反馈。"""
     current_section_id = context.get("runtime", {}).get("current_section_id")
     if current_section_id is None:
         return []
@@ -167,12 +180,15 @@ def get_current_reviews(context: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def refresh_prompt_views(context: dict[str, Any]) -> dict[str, Any]:
+    """刷新从共享状态投影出来的 prompt 视图。"""
     story = context.get("story")
     blueprint = context.get("blueprint")
     contract = context.get("contract")
     current_section = get_current_section_contract(context)
     current_draft = get_current_draft(context)
     current_reviews = get_current_reviews(context)
+    # Prompt 模板直接消费这些预渲染好的 JSON 字符串，避免在多个地方
+    # 重复做状态格式化。
     context["story_json"] = json_dumps(story or {})
     context["blueprint_json"] = json_dumps(blueprint or {})
     context["contract_json"] = json_dumps(contract or {})
@@ -194,6 +210,7 @@ def set_blueprint_and_contract(
     blueprint: ManuscriptBlueprint,
     contract: ManuscriptContract,
 ) -> dict[str, Any]:
+    """写入初始 blueprint/contract，并初始化写作阶段的运行状态。"""
     context["blueprint"] = blueprint.model_dump(mode="json")
     context["contract"] = contract.model_dump(mode="json")
     writing_order = list(blueprint.writing_order)
@@ -208,6 +225,7 @@ def set_blueprint_and_contract(
 
 
 def save_section_draft(context: dict[str, Any], draft: SectionDraft) -> dict[str, Any]:
+    """保存一个章节 draft，并同步更新对应的 contract section。"""
     section_id = draft.section_id
     runtime = context["runtime"]
     runtime["current_draft_version"] = runtime.get("current_draft_version", 0) + 1
@@ -226,10 +244,12 @@ def save_section_draft(context: dict[str, Any], draft: SectionDraft) -> dict[str
 
 
 def append_review(context: dict[str, Any], feedback: EvaluationFeedback) -> dict[str, Any]:
+    """保存当前章节某个 evaluator 的最新反馈。"""
     section_id = context["runtime"]["current_section_id"]
     draft_version = context["runtime"]["current_draft_version"]
     payload = feedback.model_dump(mode="json") | {"draft_version": draft_version}
     bucket = context["reviews"].setdefault(section_id, [])
+    # 对同一章节、同一 evaluator，只保留当前 draft 的最新意见。
     bucket = [item for item in bucket if item["evaluator_type"] != feedback.evaluator_type]
     bucket.append(payload)
     context["reviews"][section_id] = bucket
@@ -239,6 +259,7 @@ def append_review(context: dict[str, Any], feedback: EvaluationFeedback) -> dict
 
 
 def store_refiner_output(context: dict[str, Any], output: RefinerOutput) -> dict[str, Any]:
+    """把 refiner 输出产物写回共享状态。"""
     context["artifacts"]["refiner_output"] = output.model_dump(mode="json")
     if output.abstract_override:
         context["artifacts"]["abstract_override"] = output.abstract_override
@@ -248,6 +269,7 @@ def store_refiner_output(context: dict[str, Any], output: RefinerOutput) -> dict
 
 
 def store_render_output(context: dict[str, Any], rendered: RenderedManuscript) -> dict[str, Any]:
+    """保存最终渲染产物，并把运行状态标记为完成。"""
     context["artifacts"]["rendered"] = rendered.model_dump(mode="json")
     context["runtime"]["final_status"] = "rendered"
     refresh_prompt_views(context)
