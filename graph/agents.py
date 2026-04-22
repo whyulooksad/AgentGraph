@@ -10,7 +10,7 @@ import sys
 
 from src import Agent, Hook
 
-from config import load_prompt
+from config import PACKAGE_ROOT, load_prompt
 
 
 def workflow_server_config() -> dict[str, object]:
@@ -18,6 +18,7 @@ def workflow_server_config() -> dict[str, object]:
     return {
         "command": sys.executable,
         "args": ["-m", "servers.workflow"],
+        "cwd": str(PACKAGE_ROOT),
     }
 
 
