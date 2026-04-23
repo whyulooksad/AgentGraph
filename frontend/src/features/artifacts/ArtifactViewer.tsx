@@ -1,35 +1,75 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useUiStore } from "../../stores/uiStore";
-import type { RunDetail } from "../../types/run";
+import type { RunArtifact, RunDetail } from "../../types/run";
+
+function buildArtifactMap(artifacts: RunArtifact[]): Record<string, string> {
+  return Object.fromEntries(artifacts.map((artifact) => [artifact.kind, artifact.content]));
+}
 
 export function ArtifactViewer({ run }: { run: RunDetail }) {
   const activeArtifact = useUiStore((state) => state.activeArtifact);
   const setActiveArtifact = useUiStore((state) => state.setActiveArtifact);
+  const previousContentsRef = useRef<Record<string, string>>({});
+  const [changedKinds, setChangedKinds] = useState<string[]>([]);
 
   const artifact = useMemo(
     () => run.artifacts.find((item) => item.kind === activeArtifact) ?? run.artifacts[0],
     [activeArtifact, run.artifacts],
   );
 
+  useEffect(() => {
+    const previous = previousContentsRef.current;
+    const next = buildArtifactMap(run.artifacts);
+    const hasPreviousSnapshot = Object.keys(previous).length > 0;
+
+    if (!hasPreviousSnapshot) {
+      previousContentsRef.current = next;
+      return;
+    }
+
+    const changed = run.artifacts
+      .filter((item) => previous[item.kind] !== undefined && previous[item.kind] !== item.content)
+      .map((item) => item.kind);
+
+    if (changed.length) {
+      setChangedKinds((current) => Array.from(new Set([...current, ...changed])));
+    }
+
+    previousContentsRef.current = next;
+  }, [run.artifacts]);
+
+  function handleSelect(kind: RunArtifact["kind"]) {
+    setActiveArtifact(kind);
+    setChangedKinds((current) => current.filter((item) => item !== kind));
+  }
+
   return (
     <section className="panel artifact-panel">
       <div className="panel-header">
-        <h2>产物查看</h2>
-        <div className="panel-kicker">{artifact.label}</div>
+        <div>
+          <h2>产物查看</h2>
+          <div className="panel-kicker">{artifact.label}</div>
+        </div>
+        {run.status === "running" ? <div className="artifact-sync-note">运行中，仅高亮发生变化的产物</div> : null}
       </div>
       <div className="artifact-tabs">
-        {run.artifacts.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={item.kind === activeArtifact ? "artifact-tab active" : "artifact-tab"}
-            onClick={() => setActiveArtifact(item.kind)}
-          >
-            {item.label}
-          </button>
-        ))}
+        {run.artifacts.map((item) => {
+          const changed = changedKinds.includes(item.kind);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={item.kind === activeArtifact ? "artifact-tab active" : changed ? "artifact-tab changed" : "artifact-tab"}
+              onClick={() => handleSelect(item.kind)}
+            >
+              <span>{item.label}</span>
+              {changed ? <span className="artifact-tab-badge">已更新</span> : null}
+            </button>
+          );
+        })}
       </div>
+      {changedKinds.includes(artifact.kind) ? <div className="artifact-change-banner">当前产物有新的内容写入。</div> : null}
       <pre className="artifact-content artifact-content-main">{artifact.content}</pre>
     </section>
   );

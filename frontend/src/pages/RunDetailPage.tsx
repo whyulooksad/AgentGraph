@@ -10,14 +10,46 @@ import { getRunDetail } from "../services/runs";
 
 export function RunDetailPage() {
   const { runId = "" } = useParams();
-  const { data } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["run", runId],
     queryFn: () => getRunDetail(runId),
     enabled: Boolean(runId),
+    refetchInterval: (query) => {
+      const run = query.state.data;
+      if (!runId || !run) {
+        return false;
+      }
+      return run.status === "running" ? 2500 : false;
+    },
+    refetchIntervalInBackground: true,
   });
 
+  if (isLoading) {
+    return (
+      <div className="page-stack">
+        <section className="run-hero">
+          <div className="run-hero-copy">
+            <div className="eyebrow">Run</div>
+            <h1>加载中</h1>
+            <p>正在读取运行详情。</p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!data) {
-    return null;
+    return (
+      <div className="page-stack">
+        <section className="run-hero">
+          <div className="run-hero-copy">
+            <div className="eyebrow">Run</div>
+            <h1>未找到 Run</h1>
+            <p>{runId}</p>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -44,6 +76,14 @@ export function RunDetailPage() {
           <div className="run-chip">
             <span>下一节点</span>
             <strong>{data.nextNode ?? "-"}</strong>
+          </div>
+          <div className="run-chip">
+            <span>刷新状态</span>
+            <strong>{data.status === "running" ? (isFetching ? "同步中" : "自动轮询中") : "已停止轮询"}</strong>
+          </div>
+          <div className="run-chip">
+            <span>更新时间</span>
+            <strong>{data.updatedAt}</strong>
           </div>
         </div>
       </section>

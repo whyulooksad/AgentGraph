@@ -468,9 +468,31 @@ dt {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.nested-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
+.nested-card-head strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.compact-button {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
 .story-editor-panel,
 .story-preview-panel {
   align-self: start;
+}
+
+.metadata-grid {
+  margin-top: 4px;
 }
 
 .story-select,
@@ -733,6 +755,9 @@ dd {
 }
 
 .artifact-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 36px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -741,9 +766,41 @@ dd {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.artifact-tab.changed {
+  border-color: rgba(239, 232, 216, 0.24);
+  color: var(--text);
+}
+
 .artifact-tab.active {
   color: #14161b;
   background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+}
+
+.artifact-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(239, 232, 216, 0.14);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.artifact-sync-note,
+.artifact-change-banner {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+}
+
+.artifact-change-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(239, 232, 216, 0.12);
+  border-radius: 14px;
+  background: rgba(239, 232, 216, 0.05);
+  color: var(--accent-strong);
 }
 
 .artifact-content {

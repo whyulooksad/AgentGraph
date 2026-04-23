@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { ArtifactSeed, ExperimentSpec, ResearchStory } from "../../types/story";
+import type {
+  ArtifactSeed,
+  ExperimentSpec,
+  ReferenceSpec,
+  ResearchStory,
+} from "../../types/story";
 
 type StoryWorkbenchProps = {
   stories: ResearchStory[];
@@ -8,9 +13,29 @@ type StoryWorkbenchProps = {
   onRun: (story: ResearchStory) => Promise<void>;
 };
 
-function createEmptyExperiment(): ExperimentSpec {
+type StoryMetadata = {
+  target_venue: string;
+  writing_language: string;
+  paper_type: string;
+  domain: string;
+  expected_sections: string[];
+  keywords: string[];
+  notes: string;
+};
+
+const DEFAULT_METADATA: StoryMetadata = {
+  target_venue: "",
+  writing_language: "en",
+  paper_type: "",
+  domain: "",
+  expected_sections: [],
+  keywords: [],
+  notes: "",
+};
+
+function createEmptyExperiment(index = 1): ExperimentSpec {
   return {
-    experiment_id: "exp_1",
+    experiment_id: `exp_${index}`,
     name: "",
     setup: "",
     dataset: "",
@@ -19,13 +44,24 @@ function createEmptyExperiment(): ExperimentSpec {
   };
 }
 
-function createEmptyAsset(): ArtifactSeed {
+function createEmptyAsset(index = 1): ArtifactSeed {
   return {
-    artifact_id: "fig_1",
+    artifact_id: `fig_${index}`,
     kind: "figure",
     title: "",
     description: "",
     target_sections: [],
+  };
+}
+
+function createEmptyReference(index = 1): ReferenceSpec {
+  return {
+    reference_id: `ref_${index}`,
+    title: "",
+    authors: [],
+    year: null,
+    venue: null,
+    notes: null,
   };
 }
 
@@ -43,9 +79,9 @@ function createEmptyStory(): ResearchStory {
     baselines: [],
     findings: [],
     limitations: [],
-    references: [],
+    references: [createEmptyReference()],
     assets: [createEmptyAsset()],
-    metadata: {},
+    metadata: { ...DEFAULT_METADATA },
   };
 }
 
@@ -60,6 +96,20 @@ function fromText(value: string): string[] {
     .filter(Boolean);
 }
 
+function normalizeMetadata(metadata: ResearchStory["metadata"]): StoryMetadata {
+  return {
+    target_venue: typeof metadata.target_venue === "string" ? metadata.target_venue : "",
+    writing_language: typeof metadata.writing_language === "string" ? metadata.writing_language : "en",
+    paper_type: typeof metadata.paper_type === "string" ? metadata.paper_type : "",
+    domain: typeof metadata.domain === "string" ? metadata.domain : "",
+    expected_sections: Array.isArray(metadata.expected_sections)
+      ? metadata.expected_sections.map(String).filter(Boolean)
+      : [],
+    keywords: Array.isArray(metadata.keywords) ? metadata.keywords.map(String).filter(Boolean) : [],
+    notes: typeof metadata.notes === "string" ? metadata.notes : "",
+  };
+}
+
 export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) {
   const [selectedId, setSelectedId] = useState<string>(stories[0]?.story_id ?? "new_story");
   const [story, setStory] = useState<ResearchStory>(stories[0] ?? createEmptyStory());
@@ -68,16 +118,20 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
     () => stories.find((item) => item.story_id === selectedId) ?? null,
     [selectedId, stories],
   );
+  const metadata = useMemo(() => normalizeMetadata(story.metadata), [story.metadata]);
 
   useEffect(() => {
     if (!stories.length) {
+      return;
+    }
+    if (selectedId === "new_story") {
       return;
     }
     if (!selectedStory) {
       setSelectedId(stories[0].story_id);
       setStory(stories[0]);
     }
-  }, [selectedStory, stories]);
+  }, [selectedId, selectedStory, stories]);
 
   function syncStory(nextId: string) {
     setSelectedId(nextId);
@@ -89,10 +143,47 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
     setStory((current) => ({ ...current, [key]: value }));
   }
 
+  function patchMetadata<K extends keyof StoryMetadata>(key: K, value: StoryMetadata[K]) {
+    setStory((current) => ({
+      ...current,
+      metadata: {
+        ...normalizeMetadata(current.metadata),
+        [key]: value,
+      },
+    }));
+  }
+
   function patchExperiment(index: number, next: ExperimentSpec) {
     setStory((current) => ({
       ...current,
       experiments: current.experiments.map((item, i) => (i === index ? next : item)),
+    }));
+  }
+
+  function removeExperiment(index: number) {
+    setStory((current) => ({
+      ...current,
+      experiments:
+        current.experiments.length > 1
+          ? current.experiments.filter((_, i) => i !== index)
+          : [createEmptyExperiment()],
+    }));
+  }
+
+  function patchReference(index: number, next: ReferenceSpec) {
+    setStory((current) => ({
+      ...current,
+      references: current.references.map((item, i) => (i === index ? next : item)),
+    }));
+  }
+
+  function removeReference(index: number) {
+    setStory((current) => ({
+      ...current,
+      references:
+        current.references.length > 1
+          ? current.references.filter((_, i) => i !== index)
+          : [createEmptyReference()],
     }));
   }
 
@@ -103,13 +194,26 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
     }));
   }
 
+  function removeAsset(index: number) {
+    setStory((current) => ({
+      ...current,
+      assets: current.assets.length > 1 ? current.assets.filter((_, i) => i !== index) : [createEmptyAsset()],
+    }));
+  }
+
   async function handleImportFile(file: File | null) {
     if (!file) {
       return;
     }
     const text = await file.text();
     const parsed = JSON.parse(text) as ResearchStory;
-    setStory(parsed);
+    setStory({
+      ...parsed,
+      metadata: normalizeMetadata(parsed.metadata),
+      references: parsed.references.length ? parsed.references : [createEmptyReference()],
+      experiments: parsed.experiments.length ? parsed.experiments : [createEmptyExperiment()],
+      assets: parsed.assets.length ? parsed.assets : [createEmptyAsset()],
+    });
     setSelectedId(parsed.story_id);
   }
 
@@ -161,8 +265,16 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
               <strong>{story.topic || "-"}</strong>
             </div>
             <div className="story-glance-row">
-              <span>Experiments</span>
+              <span>实验</span>
               <strong>{story.experiments.length}</strong>
+            </div>
+            <div className="story-glance-row">
+              <span>参考文献</span>
+              <strong>{story.references.length}</strong>
+            </div>
+            <div className="story-glance-row">
+              <span>图表资产</span>
+              <strong>{story.assets.length}</strong>
             </div>
           </div>
         </section>
@@ -250,18 +362,24 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
 
         <section className="nested-panel">
           <div className="panel-header">
-            <h2>experiments</h2>
+            <h2>实验设计</h2>
             <button
               className="ghost-button"
               type="button"
-              onClick={() => patch("experiments", [...story.experiments, createEmptyExperiment()])}
+              onClick={() => patch("experiments", [...story.experiments, createEmptyExperiment(story.experiments.length + 1)])}
             >
-              新增 experiment
+              新增实验
             </button>
           </div>
           <div className="nested-grid">
             {story.experiments.map((experiment, index) => (
               <div className="nested-card" key={`${experiment.experiment_id}-${index}`}>
+                <div className="nested-card-head">
+                  <strong>实验 {index + 1}</strong>
+                  <button className="ghost-button compact-button" type="button" onClick={() => removeExperiment(index)}>
+                    删除
+                  </button>
+                </div>
                 <label className="field">
                   <span>experiment_id</span>
                   <input
@@ -310,11 +428,98 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
 
         <section className="nested-panel">
           <div className="panel-header">
-            <h2>assets</h2>
+            <h2>参考文献</h2>
             <button
               className="ghost-button"
               type="button"
-              onClick={() => patch("assets", [...story.assets, createEmptyAsset()])}
+              onClick={() => patch("references", [...story.references, createEmptyReference(story.references.length + 1)])}
+            >
+              新增 reference
+            </button>
+          </div>
+          <div className="nested-grid">
+            {story.references.map((reference, index) => (
+              <div className="nested-card" key={`${reference.reference_id}-${index}`}>
+                <div className="nested-card-head">
+                  <strong>Reference {index + 1}</strong>
+                  <button className="ghost-button compact-button" type="button" onClick={() => removeReference(index)}>
+                    删除
+                  </button>
+                </div>
+                <label className="field">
+                  <span>reference_id</span>
+                  <input
+                    value={reference.reference_id}
+                    onChange={(e) => patchReference(index, { ...reference, reference_id: e.target.value })}
+                  />
+                </label>
+                <label className="field">
+                  <span>year</span>
+                  <input
+                    value={reference.year ?? ""}
+                    onChange={(e) =>
+                      patchReference(index, {
+                        ...reference,
+                        year: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>title</span>
+                  <input
+                    value={reference.title}
+                    onChange={(e) => patchReference(index, { ...reference, title: e.target.value })}
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>authors</span>
+                  <input
+                    value={reference.authors.join(", ")}
+                    onChange={(e) =>
+                      patchReference(index, {
+                        ...reference,
+                        authors: e.target.value.split(",").map((item) => item.trim()).filter(Boolean),
+                      })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>venue</span>
+                  <input
+                    value={reference.venue ?? ""}
+                    onChange={(e) =>
+                      patchReference(index, {
+                        ...reference,
+                        venue: e.target.value || null,
+                      })
+                    }
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>notes</span>
+                  <textarea
+                    value={reference.notes ?? ""}
+                    onChange={(e) =>
+                      patchReference(index, {
+                        ...reference,
+                        notes: e.target.value || null,
+                      })
+                    }
+                  />
+                </label>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="nested-panel">
+          <div className="panel-header">
+            <h2>图表资产</h2>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => patch("assets", [...story.assets, createEmptyAsset(story.assets.length + 1)])}
             >
               新增 asset
             </button>
@@ -322,6 +527,12 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
           <div className="nested-grid">
             {story.assets.map((asset, index) => (
               <div className="nested-card" key={`${asset.artifact_id}-${index}`}>
+                <div className="nested-card-head">
+                  <strong>Asset {index + 1}</strong>
+                  <button className="ghost-button compact-button" type="button" onClick={() => removeAsset(index)}>
+                    删除
+                  </button>
+                </div>
                 <label className="field">
                   <span>artifact_id</span>
                   <input
@@ -358,6 +569,58 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
                 </label>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="nested-panel">
+          <div className="panel-header">
+            <h2>元数据</h2>
+          </div>
+          <div className="form-grid metadata-grid">
+            <label className="field">
+              <span>target_venue</span>
+              <input
+                value={metadata.target_venue}
+                onChange={(e) => patchMetadata("target_venue", e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>writing_language</span>
+              <select
+                className="story-select"
+                value={metadata.writing_language}
+                onChange={(e) => patchMetadata("writing_language", e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>paper_type</span>
+              <input value={metadata.paper_type} onChange={(e) => patchMetadata("paper_type", e.target.value)} />
+            </label>
+            <label className="field">
+              <span>domain</span>
+              <input value={metadata.domain} onChange={(e) => patchMetadata("domain", e.target.value)} />
+            </label>
+            <label className="field field-wide">
+              <span>expected_sections</span>
+              <textarea
+                value={toText(metadata.expected_sections)}
+                onChange={(e) => patchMetadata("expected_sections", fromText(e.target.value))}
+              />
+            </label>
+            <label className="field field-wide">
+              <span>keywords</span>
+              <textarea
+                value={toText(metadata.keywords)}
+                onChange={(e) => patchMetadata("keywords", fromText(e.target.value))}
+              />
+            </label>
+            <label className="field field-wide">
+              <span>notes</span>
+              <textarea value={metadata.notes} onChange={(e) => patchMetadata("notes", e.target.value)} />
+            </label>
           </div>
         </section>
       </section>

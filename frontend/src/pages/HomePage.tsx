@@ -41,15 +41,21 @@ export function HomePage() {
             </Link>
           </div>
           <div className="home-list">
-            {stories.slice(0, 3).map((story) => (
-              <div className="home-list-row" key={story.story_id}>
-                <div>
-                  <div className="home-list-title">{story.story_id}</div>
-                  <div className="home-list-subtle">{story.topic}</div>
+            {stories.length ? (
+              stories.slice(0, 3).map((story) => (
+                <div className="home-list-row" key={story.story_id}>
+                  <div>
+                    <div className="home-list-title">{story.story_id}</div>
+                    <div className="home-list-subtle">{story.topic}</div>
+                  </div>
+                  <div className="home-list-time">{story.title_hint ?? "-"}</div>
                 </div>
-                <div className="home-list-time">{story.title_hint ?? "-"}</div>
+              ))
+            ) : (
+              <div className="home-list-row">
+                <div className="home-list-subtle">还没有 Story。</div>
               </div>
-            ))}
+            )}
           </div>
         </article>
 
@@ -61,17 +67,23 @@ export function HomePage() {
             </Link>
           </div>
           <div className="home-list">
-            {runs.slice(0, 3).map((run) => (
-              <div className="home-list-row" key={run.id}>
-                <div>
-                  <div className="home-list-title">{run.id}</div>
-                  <div className="home-list-subtle">
-                    {run.model} · {run.status}
+            {runs.length ? (
+              runs.slice(0, 3).map((run) => (
+                <div className="home-list-row" key={run.id}>
+                  <div>
+                    <div className="home-list-title">{run.id}</div>
+                    <div className="home-list-subtle">
+                      {run.model} · {run.status}
+                    </div>
                   </div>
+                  <div className="home-list-time">{run.updatedAt.slice(11, 16)}</div>
                 </div>
-                <div className="home-list-time">{run.updatedAt.slice(11, 16)}</div>
+              ))
+            ) : (
+              <div className="home-list-row">
+                <div className="home-list-subtle">还没有 Run。</div>
               </div>
-            ))}
+            )}
           </div>
         </article>
 

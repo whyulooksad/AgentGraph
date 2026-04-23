@@ -23,10 +23,7 @@ export function WorkflowPanel({ run }: { run: RunDetail }) {
       </div>
       <div className="step-grid">
         {steps.map((step) => (
-          <div
-            key={step}
-            className={step === run.currentNode ? "step-card active" : "step-card"}
-          >
+          <div key={step} className={step === run.currentNode ? "step-card active" : "step-card"}>
             <div className="step-card-dot" />
             <span>{labels[step]}</span>
           </div>
