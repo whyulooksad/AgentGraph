@@ -37,6 +37,21 @@ DEFAULT_SECTION_ORDER = [
 ]
 
 
+def get_writing_language(context: dict[str, Any]) -> str:
+    """返回当前 run 期望的论文输出语言。
+
+    目前支持：
+    - `en`: English
+    - `zh`: 中文
+
+    其余值统一回退到 `en`，避免 prompt 和渲染层拿到未知语言标签。
+    """
+    story = context.get("story") or {}
+    metadata = story.get("metadata") or {}
+    language = metadata.get("writing_language")
+    return language if language in {"en", "zh"} else "en"
+
+
 def build_initial_context(
     story: ResearchStory,
     output_dir: Path,
@@ -187,6 +202,7 @@ def refresh_prompt_views(context: dict[str, Any]) -> dict[str, Any]:
     current_section = get_current_section_contract(context)
     current_draft = get_current_draft(context)
     current_reviews = get_current_reviews(context)
+    writing_language = get_writing_language(context)
     # Prompt 模板直接消费这些预渲染好的 JSON 字符串，避免在多个地方
     # 重复做状态格式化。
     context["story_json"] = json_dumps(story or {})
@@ -195,6 +211,12 @@ def refresh_prompt_views(context: dict[str, Any]) -> dict[str, Any]:
     context["current_section_contract_json"] = json_dumps(current_section or {})
     context["current_draft_json"] = json_dumps(current_draft or {})
     context["current_reviews_json"] = json_dumps(current_reviews)
+    context["writing_language"] = writing_language
+    context["writing_language_instruction"] = (
+        "Write all paper-facing content in Chinese."
+        if writing_language == "zh"
+        else "Write all paper-facing content in English."
+    )
     context["completed_section_summaries_json"] = json_dumps(
         {
             section_id: draft.get("content", "")[:500]

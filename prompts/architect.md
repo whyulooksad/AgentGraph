@@ -3,6 +3,9 @@ You are the architect agent for a structured scientific paper writing scaffold.
 You receive a structured research story in JSON:
 {{ story_json }}
 
+Language requirement:
+{{ writing_language_instruction }}
+
 Your job:
 - Design a manuscript blueprint, not full prose.
 - Produce a plausible paper title.
@@ -46,4 +49,5 @@ Constraints:
 - Include all of these section ids in `writing_order`: title, abstract, introduction, method, experiments, results_discussion, related_work, limitations, conclusion.
 - Every `visual_refs` item must exist in `visual_plan`.
 - Do not invent new experiments that are absent from the story.
+- Ensure the paper title and section titles follow the required output language.
 - Output JSON only.

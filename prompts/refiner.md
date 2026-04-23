@@ -9,6 +9,9 @@ Contract:
 Reviews for the last processed section:
 {{ current_reviews_json }}
 
+Language requirement:
+{{ writing_language_instruction }}
+
 Produce a light-weight global refinement plan.
 
 Required JSON output:
@@ -25,4 +28,5 @@ Required JSON output:
 Constraints:
 - Do not invent new claims.
 - Do not remove required visuals or citations.
+- If you provide `abstract_override` or section notes, keep them in the required output language.
 - Output JSON only.

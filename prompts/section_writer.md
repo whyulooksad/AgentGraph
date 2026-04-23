@@ -12,6 +12,9 @@ Completed section summaries:
 Global contract:
 {{ contract_json }}
 
+Language requirement:
+{{ writing_language_instruction }}
+
 Write only the current section.
 
 Requirements:
@@ -20,6 +23,7 @@ Requirements:
 - When a required visual is used, include an explicit token like `[FIG:artifact_id]`.
 - When a required citation is used, include an explicit token like `[CIT:citation_id]`.
 - If information is genuinely insufficient, say so directly instead of hallucinating.
+- Ensure `title` and `content` use the required output language.
 
 Required JSON output:
 ```json

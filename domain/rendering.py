@@ -11,13 +11,37 @@ from typing import Any
 from schemas import RenderedManuscript
 
 
+def _get_writing_language(context: dict[str, Any]) -> str:
+    """读取最终稿件的目标语言。"""
+    story = context.get("story") or {}
+    metadata = story.get("metadata") or {}
+    language = metadata.get("writing_language")
+    return language if language in {"en", "zh"} else "en"
+
+
+def _references_heading(language: str) -> str:
+    """返回参考文献章节标题。"""
+    return "参考文献" if language == "zh" else "References"
+
+
+def _unknown_authors_label(language: str) -> str:
+    """返回作者缺失时的兜底文案。"""
+    return "未知作者" if language == "zh" else "Unknown"
+
+
+def _unknown_year_label(language: str) -> str:
+    """返回年份缺失时的兜底文案。"""
+    return "未知年份" if language == "zh" else "n.d."
+
+
 def build_bibliography_block(context: dict[str, Any]) -> str:
     """把 contract 里的 citation slot 渲染成 markdown 参考文献列表。"""
     contract = context.get("contract") or {}
+    language = _get_writing_language(context)
     lines = []
     for item in contract.get("citations", []):
-        authors = ", ".join(item.get("authors", [])) or "Unknown"
-        year = item.get("year") or "n.d."
+        authors = ", ".join(item.get("authors", [])) or _unknown_authors_label(language)
+        year = item.get("year") or _unknown_year_label(language)
         venue = f". {item['venue']}" if item.get("venue") else ""
         lines.append(
             f"- [{item['citation_key']}] {authors} ({year}). {item['title']}{venue}."
@@ -31,6 +55,7 @@ def render_latex_from_markdown(
     drafts: dict[str, Any],
     bibliography: str,
     abstract_override: str | None,
+    writing_language: str,
 ) -> str:
     """根据当前稿件状态构造一个轻量 LaTeX scaffold。"""
     body: list[str] = [
@@ -50,7 +75,7 @@ def render_latex_from_markdown(
         body.append(rf"\section{{{draft['title']}}}")
         body.append(content.replace("_", r"\_"))
     if bibliography:
-        body.append(r"\section{References}")
+        body.append(rf"\section{{{_references_heading(writing_language)}}}")
         body.append(bibliography.replace("_", r"\_"))
     body.append(r"\end{document}")
     return "\n".join(body) + "\n"
@@ -62,6 +87,7 @@ def render_markdown_manuscript(context: dict[str, Any]) -> RenderedManuscript:
     drafts = context.get("drafts") or {}
     sections = []
     warnings: list[str] = []
+    writing_language = _get_writing_language(context)
     title = (
         contract.get("paper_title")
         or context.get("story", {}).get("title_hint")
@@ -88,7 +114,7 @@ def render_markdown_manuscript(context: dict[str, Any]) -> RenderedManuscript:
         sections.append(f"## {draft['title']}\n\n{content}")
     bibliography = build_bibliography_block(context)
     if bibliography:
-        sections.append("## References\n\n" + bibliography)
+        sections.append(f"## {_references_heading(writing_language)}\n\n" + bibliography)
     markdown = "\n\n".join(sections).strip() + "\n"
     latex = render_latex_from_markdown(
         title,
@@ -96,5 +122,6 @@ def render_markdown_manuscript(context: dict[str, Any]) -> RenderedManuscript:
         drafts,
         bibliography,
         abstract_override,
+        writing_language,
     )
     return RenderedManuscript(markdown=markdown, latex=latex, warnings=warnings)
