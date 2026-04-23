@@ -447,6 +447,27 @@ dt {
   gap: 16px;
 }
 
+.nested-panel {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.nested-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.nested-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .story-editor-panel,
 .story-preview-panel {
   align-self: start;
@@ -821,5 +842,9 @@ dd {
 
   .field-wide {
     grid-column: auto;
+  }
+
+  .nested-card {
+    grid-template-columns: 1fr;
   }
 }

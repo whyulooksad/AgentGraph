@@ -1,6 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { listRuns } from "../services/runs";
+import { listStories } from "../services/stories";
+
 export function HomePage() {
+  const { data: stories = [] } = useQuery({
+    queryKey: ["stories"],
+    queryFn: listStories,
+  });
+  const { data: runs = [] } = useQuery({
+    queryKey: ["runs"],
+    queryFn: listRuns,
+  });
+
   return (
     <div className="overview-page">
       <section className="home-hero">
@@ -28,20 +41,15 @@ export function HomePage() {
             </Link>
           </div>
           <div className="home-list">
-            <div className="home-list-row">
-              <div>
-                <div className="home-list-title">adaptive_graph_writer</div>
-                <div className="home-list-subtle">结构化科研写作</div>
+            {stories.slice(0, 3).map((story) => (
+              <div className="home-list-row" key={story.story_id}>
+                <div>
+                  <div className="home-list-title">{story.story_id}</div>
+                  <div className="home-list-subtle">{story.topic}</div>
+                </div>
+                <div className="home-list-time">{story.title_hint ?? "-"}</div>
               </div>
-              <div className="home-list-time">04-23</div>
-            </div>
-            <div className="home-list-row">
-              <div>
-                <div className="home-list-title">story2proposal_demo</div>
-                <div className="home-list-subtle">多 Agent 科研写作</div>
-              </div>
-              <div className="home-list-time">04-22</div>
-            </div>
+            ))}
           </div>
         </article>
 
@@ -53,20 +61,17 @@ export function HomePage() {
             </Link>
           </div>
           <div className="home-list">
-            <div className="home-list-row">
-              <div>
-                <div className="home-list-title">adaptive_graph_writer_20260423</div>
-                <div className="home-list-subtle">qwen-plus · 运行中</div>
+            {runs.slice(0, 3).map((run) => (
+              <div className="home-list-row" key={run.id}>
+                <div>
+                  <div className="home-list-title">{run.id}</div>
+                  <div className="home-list-subtle">
+                    {run.model} · {run.status}
+                  </div>
+                </div>
+                <div className="home-list-time">{run.updatedAt.slice(11, 16)}</div>
               </div>
-              <div className="home-list-time">01:15</div>
-            </div>
-            <div className="home-list-row">
-              <div>
-                <div className="home-list-title">story2proposal_demo_20260422</div>
-                <div className="home-list-subtle">qwen-plus · 已完成</div>
-              </div>
-              <div className="home-list-time">22:19</div>
-            </div>
+            ))}
           </div>
         </article>
 
@@ -76,16 +81,16 @@ export function HomePage() {
           </div>
           <div className="status-stack">
             <div className="status-line">
+              <span>Stories</span>
+              <strong>{stories.length}</strong>
+            </div>
+            <div className="status-line">
+              <span>Runs</span>
+              <strong>{runs.length}</strong>
+            </div>
+            <div className="status-line">
               <span>默认模型</span>
               <strong>qwen-plus</strong>
-            </div>
-            <div className="status-line">
-              <span>当前模式</span>
-              <strong>local mock</strong>
-            </div>
-            <div className="status-line">
-              <span>主要入口</span>
-              <strong>Story / Runs</strong>
             </div>
           </div>
         </article>

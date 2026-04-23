@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { StoryWorkbench } from "../features/stories/StoryWorkbench";
 import { createRunFromStory } from "../services/runs";
 import { listStories, saveStory } from "../services/stories";
-import type { StoryDraft } from "../types/story";
+import type { ResearchStory } from "../types/story";
 
 export function StoriesPage() {
   const queryClient = useQueryClient();
@@ -15,14 +15,14 @@ export function StoriesPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (draft: StoryDraft) => saveStory(draft),
+    mutationFn: (story: ResearchStory) => saveStory(story),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["stories"] });
     },
   });
 
   const createRunMutation = useMutation({
-    mutationFn: (draft: StoryDraft) => createRunFromStory(draft),
+    mutationFn: (story: ResearchStory) => createRunFromStory(story),
     onSuccess: async (run) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["stories"] }),
@@ -42,11 +42,11 @@ export function StoriesPage() {
       </div>
       <StoryWorkbench
         stories={data}
-        onSave={async (draft) => {
-          await saveMutation.mutateAsync(draft);
+        onSave={async (story) => {
+          await saveMutation.mutateAsync(story);
         }}
-        onRun={async (draft) => {
-          const saved = await saveMutation.mutateAsync(draft);
+        onRun={async (story) => {
+          const saved = await saveMutation.mutateAsync(story);
           await createRunMutation.mutateAsync(saved);
         }}
       />
