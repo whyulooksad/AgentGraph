@@ -101,6 +101,12 @@ class VisualArtifact(BaseModel):
     placement_constraint: Literal["inline", "after_section", "before_section", "appendix", "unspecified"] = "unspecified"
     occurrence_policy: Literal["exactly_once", "at_least_once"] = "exactly_once"
     explanation_required: bool = True
+    materialization_status: Literal["planned", "materialized", "missing"] = "planned"
+    generator: str | None = None
+    source_path: str | None = None
+    rendered_path: str | None = None
+    thumbnail_path: str | None = None
+    object_map: list[dict[str, Any]] = Field(default_factory=list)
     resolved_references: list[str] = Field(default_factory=list)
     render_status: Literal["planned", "registered", "rendered", "missing", "duplicated"] = "planned"
 

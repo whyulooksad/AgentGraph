@@ -70,6 +70,8 @@ def build_initial_context(
             "current_draft_version": 0,
             "needs_manual_review": [],
             "next_node": None,
+            "section_writer_mode": "compose",
+            "section_writer_plan": {},
         },
     }
     refresh_prompt_views(context)
@@ -230,6 +232,7 @@ def refresh_prompt_views(context: dict[str, Any]) -> dict[str, Any]:
     current_section = get_current_section_contract(context)
     current_draft = get_current_draft(context)
     current_reviews = get_current_reviews(context)
+    runtime = context.get("runtime", {})
     writing_language = get_writing_language(context)
     # Prompt 模板直接消费这些预渲染好的 JSON 字符串，避免在多个地方
     # 重复做状态格式化。
@@ -242,6 +245,13 @@ def refresh_prompt_views(context: dict[str, Any]) -> dict[str, Any]:
     )
     context["current_draft_json"] = json_dumps(current_draft or {})
     context["current_reviews_json"] = json_dumps(current_reviews)
+    context["section_writer_mode"] = runtime.get("section_writer_mode", "compose")
+    context["section_writer_plan_json"] = json_dumps(runtime.get("section_writer_plan", {}))
+    context["section_writer_mode_instruction"] = (
+        "You are in repair mode. Perform the smallest valid change that fixes the requested issue."
+        if runtime.get("section_writer_mode") == "repair"
+        else "You are in compose mode. Write the full current section from scratch within the contract."
+    )
     context["writing_language"] = writing_language
     context["writing_language_instruction"] = (
         "Write all paper-facing content in Chinese."
@@ -278,6 +288,8 @@ def set_blueprint_and_contract(
     context["runtime"]["completed_sections"] = []
     context["runtime"]["current_section_id"] = writing_order[0] if writing_order else None
     context["runtime"]["rewrite_count"] = {section_id: 0 for section_id in writing_order}
+    context["runtime"]["section_writer_mode"] = "compose"
+    context["runtime"]["section_writer_plan"] = {}
     context["contract"]["global_status"]["current_section_id"] = context["runtime"]["current_section_id"]
     context["contract"]["global_status"]["pending_sections"] = writing_order
     context["contract"]["global_status"]["completed_sections"] = []
@@ -309,6 +321,21 @@ def save_section_draft(context: dict[str, Any], draft: SectionDraft) -> dict[str
             if section_id not in artifact["resolved_references"]:
                 artifact["resolved_references"].append(section_id)
             artifact["render_status"] = "registered"
+    for materialized in draft.visual_artifacts:
+        for artifact in context.get("contract", {}).get("visuals", []):
+            if artifact["artifact_id"] != materialized.artifact_id:
+                continue
+            artifact["materialization_status"] = "materialized"
+            artifact["generator"] = materialized.generator
+            artifact["source_path"] = materialized.source_path
+            artifact["rendered_path"] = materialized.rendered_path
+            artifact["thumbnail_path"] = materialized.thumbnail_path
+            artifact["object_map"] = materialized.object_map
+            if section_id not in artifact["resolved_references"]:
+                artifact["resolved_references"].append(section_id)
+            if artifact["render_status"] == "planned":
+                artifact["render_status"] = "registered"
+            break
     for citation in context.get("contract", {}).get("citations", []):
         if citation["citation_id"] in draft.referenced_citation_ids:
             citation["status"] = "used"
@@ -320,6 +347,8 @@ def save_section_draft(context: dict[str, Any], draft: SectionDraft) -> dict[str
                         citation["grounded_claim_ids"].append(claim_id)
     context["contract"]["global_status"]["state"] = "drafted"
     context["contract"]["global_status"]["current_section_id"] = section_id
+    context["runtime"]["section_writer_mode"] = "compose"
+    context["runtime"]["section_writer_plan"] = {}
     refresh_prompt_views(context)
     persist_run_state(context)
     return context

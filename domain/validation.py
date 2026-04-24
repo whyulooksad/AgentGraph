@@ -29,7 +29,16 @@ def validate_visual_references(section: dict[str, Any], draft: dict[str, Any]) -
     content_ids = set(tokens_in_text(draft.get("content", ""), "FIG"))
     referenced_ids = set(draft.get("referenced_visual_ids", [])) | content_ids
     missing = set(section.get("required_visual_ids", [])) - referenced_ids
-    return [f"Missing visual reference: {artifact_id}" for artifact_id in sorted(missing)]
+    issues = [f"Missing visual reference: {artifact_id}" for artifact_id in sorted(missing)]
+    materialized_ids = {
+        artifact.get("artifact_id")
+        for artifact in draft.get("visual_artifacts", [])
+        if artifact.get("artifact_id")
+    }
+    for artifact_id in sorted(referenced_ids & set(section.get("required_visual_ids", []))):
+        if artifact_id not in materialized_ids:
+            issues.append(f"Referenced visual has no materialized artifact payload: {artifact_id}")
+    return issues
 
 
 def validate_citation_slots(section: dict[str, Any], draft: dict[str, Any]) -> tuple[list[str], list[dict[str, Any]]]:

@@ -79,6 +79,9 @@ export type ContractPayload = {
     label?: string;
     kind?: string;
     semantic_role?: string;
+    materialization_status?: string;
+    generator?: string;
+    rendered_path?: string;
     placement_constraint?: string;
     render_status?: string;
     target_sections?: string[];

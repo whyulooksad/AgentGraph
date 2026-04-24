@@ -4,7 +4,6 @@ const labels: Record<string, string> = {
   orchestrator: "orchestrator",
   architect: "architect",
   section_writer: "section_writer",
-  visual_repair: "visual_repair",
   reasoning_evaluator: "reasoning_evaluator",
   data_fidelity_evaluator: "data_fidelity_evaluator",
   visual_evaluator: "visual_evaluator",

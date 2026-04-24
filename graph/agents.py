@@ -6,16 +6,21 @@ import sys
 
 from src import Agent, Hook
 
-from config import PACKAGE_ROOT, load_prompt
+from config import PACKAGE_ROOT, load_mcp_server, load_prompt
 
 
 def workflow_server_config() -> dict[str, object]:
-    """返回应用层 workflow MCP server 的启动配置。"""
+    """返回 workflow MCP server 的启动配置。"""
     return {
         "command": sys.executable,
         "args": ["-m", "servers.workflow"],
         "cwd": str(PACKAGE_ROOT),
     }
+
+
+def drawio_server_config() -> dict[str, object] | None:
+    """返回 draw.io MCP server 配置；优先读取仓库内 `.mcp.json`。"""
+    return load_mcp_server("drawio")
 
 
 def _make_agent(
@@ -25,6 +30,7 @@ def _make_agent(
     *,
     on_start: str | None = None,
     on_end: str | None = None,
+    mcp_servers: dict[str, object] | None = None,
 ) -> Agent:
     """按统一规则构造一个应用层 Agent。"""
     hooks = []
@@ -35,11 +41,13 @@ def _make_agent(
         model=model,
         instructions=load_prompt(prompt_name),
         hooks=hooks,
+        mcpServers=mcp_servers or {},
     )
 
 
 def build_agents(model: str) -> dict[str, Agent]:
-    """构造 Story2Proposal 流程中所有静态 Agent 节点。"""
+    """构造 Story2Proposal 流程中的所有静态 Agent 节点。"""
+    drawio_config = drawio_server_config()
     return {
         "architect": _make_agent(
             "architect",
@@ -52,12 +60,7 @@ def build_agents(model: str) -> dict[str, Agent]:
             model,
             "section_writer.md",
             on_end="mcp__s2p_workflow__capture_section_writer_output",
-        ),
-        "visual_repair": _make_agent(
-            "visual_repair",
-            model,
-            "visual_repair.md",
-            on_end="mcp__s2p_workflow__capture_visual_repair_output",
+            mcp_servers=({"drawio": drawio_config} if drawio_config is not None else None),
         ),
         "reasoning_evaluator": _make_agent(
             "reasoning_evaluator",

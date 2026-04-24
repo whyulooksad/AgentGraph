@@ -135,6 +135,12 @@ export function ContractArtifactView({ content }: { content: string }) {
                   <div className="contract-list-subtle">
                     {visual.placement_constraint ?? "unspecified"} · {visual.render_status ?? "planned"}
                   </div>
+                  <div className="contract-list-subtle">
+                    materialization：{visual.materialization_status ?? "planned"} · {visual.generator ?? "未指定"}
+                  </div>
+                  {visual.rendered_path ? (
+                    <div className="contract-list-subtle">文件：{visual.rendered_path}</div>
+                  ) : null}
                   {visual.target_sections?.length ? (
                     <div className="contract-list-subtle">目标章节：{visual.target_sections.join("、")}</div>
                   ) : null}

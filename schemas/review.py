@@ -50,7 +50,7 @@ class ContractPatch(BaseModel):
 class EvaluationFeedback(BaseModel):
     """一次 evaluator 输出的完整结构化反馈。"""
 
-    evaluator_type: Literal["reasoning", "data_fidelity", "visual", "structure"]
+    evaluator_type: Literal["reasoning", "data_fidelity", "visual"]
     status: Literal["pass", "revise", "fail"]
     score: float | None = None
     confidence: float | None = None

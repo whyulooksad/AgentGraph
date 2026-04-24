@@ -116,6 +116,36 @@ def _should_use_visual_repair(
     return visual_status in {"revise", "fail"}
 
 
+def _build_section_writer_plan(context: dict[str, Any], aggregate: dict[str, Any], section_id: str) -> dict[str, Any]:
+    """为 section_writer 构造下一步的执行计划。"""
+    mode = "compose"
+    issues = aggregate.get("issues", [])
+    actions: list[dict[str, Any]] = []
+    target_visual_ids: list[str] = []
+
+    if _should_use_visual_repair(context, aggregate, section_id):
+        mode = "repair"
+        reviews = list((context.get("reviews") or {}).get(section_id, []))
+        for review in reviews:
+            if review.get("evaluator_type") != "visual":
+                continue
+            actions = list(review.get("suggested_actions", []))
+            target_visual_ids = [
+                item.get("target_id")
+                for item in review.get("issues", [])
+                if item.get("target_id")
+            ]
+            break
+
+    return {
+        "mode": mode,
+        "section_id": section_id,
+        "issues": issues,
+        "suggested_actions": actions,
+        "target_visual_ids": list(dict.fromkeys(target_visual_ids)),
+    }
+
+
 def apply_review_cycle(context: dict[str, Any]) -> dict[str, Any]:
     """根据聚合反馈决定当前章节是推进还是重写。"""
     aggregate = aggregate_current_feedback(context)
@@ -125,11 +155,12 @@ def apply_review_cycle(context: dict[str, Any]) -> dict[str, Any]:
     rewrite_count = runtime["rewrite_count"].get(section_id, 0)
     next_action = "advance"
     section_final_status = "approved"
+    section_writer_plan = _build_section_writer_plan(context, aggregate, section_id)
 
     if aggregate["status"] in {"revise", "fail"}:
         if rewrite_count < runtime["max_rewrite_per_section"]:
             runtime["rewrite_count"][section_id] = rewrite_count + 1
-            next_action = "visual_repair" if _should_use_visual_repair(context, aggregate, section_id) else "rewrite"
+            next_action = "repair_visual" if section_writer_plan["mode"] == "repair" else "rewrite_section"
             for section in contract["sections"]:
                 if section["section_id"] == section_id:
                     section["status"] = "needs_revision"
@@ -161,10 +192,15 @@ def apply_review_cycle(context: dict[str, Any]) -> dict[str, Any]:
         remaining = list(runtime["pending_sections"])
         runtime["current_section_id"] = remaining[0] if remaining else None
         runtime["current_draft_version"] = 0
+        runtime["section_writer_mode"] = "compose"
+        runtime["section_writer_plan"] = {}
         for section in contract["sections"]:
             if section["section_id"] == section_id:
                 section["status"] = section_final_status
                 break
+    else:
+        runtime["section_writer_mode"] = section_writer_plan["mode"]
+        runtime["section_writer_plan"] = section_writer_plan
 
     contract["global_status"]["state"] = "all_sections_completed" if runtime["current_section_id"] is None else "section_reviewed"
     contract["global_status"]["current_section_id"] = runtime["current_section_id"]
@@ -189,8 +225,6 @@ def apply_review_cycle(context: dict[str, Any]) -> dict[str, Any]:
     runtime["final_status"] = "all_sections_completed" if runtime["current_section_id"] is None else runtime.get("final_status")
     if runtime["current_section_id"] is None:
         runtime["next_node"] = "refiner"
-    elif next_action == "visual_repair":
-        runtime["next_node"] = "visual_repair"
     else:
         runtime["next_node"] = "section_writer"
     return context

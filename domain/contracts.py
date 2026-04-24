@@ -203,7 +203,8 @@ def initialize_contract(
             target_sections=list(visual.target_sections),
             placement_hint=", ".join(visual.target_sections) if visual.target_sections else None,
             placement_constraint="after_section",
-            render_status="registered",
+            materialization_status="planned",
+            render_status="planned",
         )
         for visual in blueprint.visual_plan
     ]

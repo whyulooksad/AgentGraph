@@ -27,6 +27,18 @@ class EvidenceTrace(BaseModel):
     citation_ids: list[str] = Field(default_factory=list)
 
 
+class VisualArtifactMaterialization(BaseModel):
+    """section writer 在写作阶段生成或更新的真实 visual artifact 信息。"""
+
+    artifact_id: str
+    generator: str
+    source_path: str | None = None
+    rendered_path: str | None = None
+    thumbnail_path: str | None = None
+    object_map: list[dict[str, Any]] = Field(default_factory=list)
+    summary: str | None = None
+
+
 class SectionDraft(BaseModel):
     """section writer 产出的单个章节草稿。"""
 
@@ -38,6 +50,7 @@ class SectionDraft(BaseModel):
     covered_claim_ids: list[str] = Field(default_factory=list)
     story_traces: list[StoryTrace] = Field(default_factory=list)
     evidence_traces: list[EvidenceTrace] = Field(default_factory=list)
+    visual_artifacts: list[VisualArtifactMaterialization] = Field(default_factory=list)
     terminology_used: list[str] = Field(default_factory=list)
     unresolved_items: list[str] = Field(default_factory=list)
 
