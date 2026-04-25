@@ -11,6 +11,7 @@ type StoryWorkbenchProps = {
   stories: ResearchStory[];
   onSave: (story: ResearchStory) => Promise<void>;
   onRun: (story: ResearchStory) => Promise<void>;
+  onDelete: (story: ResearchStory) => void;
 };
 
 type StoryMetadata = {
@@ -110,7 +111,7 @@ function normalizeMetadata(metadata: ResearchStory["metadata"]): StoryMetadata {
   };
 }
 
-export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) {
+export function StoryWorkbench({ stories, onSave, onRun, onDelete }: StoryWorkbenchProps) {
   const [selectedId, setSelectedId] = useState<string>(stories[0]?.story_id ?? "new_story");
   const [story, setStory] = useState<ResearchStory>(stories[0] ?? createEmptyStory());
 
@@ -121,10 +122,7 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
   const metadata = useMemo(() => normalizeMetadata(story.metadata), [story.metadata]);
 
   useEffect(() => {
-    if (!stories.length) {
-      return;
-    }
-    if (selectedId === "new_story") {
+    if (!stories.length || selectedId === "new_story") {
       return;
     }
     if (!selectedStory) {
@@ -226,15 +224,18 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
           </div>
           <div className="story-list-stack">
             {stories.map((item) => (
-              <button
+              <div
                 key={item.story_id}
-                type="button"
                 className={item.story_id === selectedId ? "story-list-item active" : "story-list-item"}
-                onClick={() => syncStory(item.story_id)}
               >
-                <span className="story-list-title">{item.title_hint || item.story_id}</span>
-                <span className="story-list-meta">{item.story_id}</span>
-              </button>
+                <button type="button" className="story-list-main" onClick={() => syncStory(item.story_id)}>
+                  <span className="story-list-title">{item.title_hint || item.story_id}</span>
+                  <span className="story-list-meta">{item.story_id}</span>
+                </button>
+                <button type="button" className="story-list-delete" onClick={() => onDelete(item)}>
+                  删除
+                </button>
+              </div>
             ))}
             <button
               type="button"
@@ -434,7 +435,7 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
               type="button"
               onClick={() => patch("references", [...story.references, createEmptyReference(story.references.length + 1)])}
             >
-              新增 reference
+              新增 Reference
             </button>
           </div>
           <div className="nested-grid">
@@ -521,7 +522,7 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
               type="button"
               onClick={() => patch("assets", [...story.assets, createEmptyAsset(story.assets.length + 1)])}
             >
-              新增 asset
+              新增 Asset
             </button>
           </div>
           <div className="nested-grid">
@@ -579,10 +580,7 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
           <div className="form-grid metadata-grid">
             <label className="field">
               <span>目标期刊 / 会议</span>
-              <input
-                value={metadata.target_venue}
-                onChange={(e) => patchMetadata("target_venue", e.target.value)}
-              />
+              <input value={metadata.target_venue} onChange={(e) => patchMetadata("target_venue", e.target.value)} />
             </label>
             <label className="field">
               <span>写作语言</span>
@@ -612,10 +610,7 @@ export function StoryWorkbench({ stories, onSave, onRun }: StoryWorkbenchProps) 
             </label>
             <label className="field field-wide">
               <span>关键词</span>
-              <textarea
-                value={toText(metadata.keywords)}
-                onChange={(e) => patchMetadata("keywords", fromText(e.target.value))}
-              />
+              <textarea value={toText(metadata.keywords)} onChange={(e) => patchMetadata("keywords", fromText(e.target.value))} />
             </label>
             <label className="field field-wide">
               <span>附加说明</span>

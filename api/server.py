@@ -39,6 +39,15 @@ def save_story(payload: ResearchStory) -> ResearchStory:
     return stories.save(payload)
 
 
+@router.delete("/stories/{story_id}", status_code=204)
+def delete_story(story_id: str) -> None:
+    """Delete a persisted story by its story id."""
+    try:
+        stories.delete(story_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Story not found: {story_id}") from exc
+
+
 @router.get("/runs", response_model=list[RunItemResponse])
 def list_runs() -> list[RunItemResponse]:
     """返回当前可见的全部 run 摘要。"""

@@ -167,17 +167,26 @@ class ActiveRun:
 
 class StoryRepository:
     def list(self) -> list[ResearchStory]:
-        items: list[tuple[float, ResearchStory]] = []
+        items: dict[str, tuple[float, ResearchStory]] = {}
         for path in STORIES_DIR.glob("*.json"):
             story = ResearchStory.from_path(path)
-            items.append((path.stat().st_mtime, story))
-        items.sort(key=lambda item: item[0], reverse=True)
-        return [item[1] for item in items]
+            mtime = path.stat().st_mtime
+            current = items.get(story.story_id)
+            if current is None or mtime > current[0]:
+                items[story.story_id] = (mtime, story)
+        ordered = sorted(items.values(), key=lambda item: item[0], reverse=True)
+        return [item[1] for item in ordered]
 
     def save(self, story: ResearchStory) -> ResearchStory:
         path = STORIES_DIR / f"{story.story_id}.json"
         path.write_text(story.model_dump_json(indent=2), encoding="utf-8")
         return story
+
+    def delete(self, story_id: str) -> None:
+        path = STORIES_DIR / f"{story_id}.json"
+        if not path.exists():
+            raise FileNotFoundError(story_id)
+        path.unlink()
 
 
 class RunRepository:

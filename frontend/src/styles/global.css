@@ -431,6 +431,25 @@ dt {
   text-align: left;
 }
 
+.story-list-main {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.story-list-delete {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ff9f8d;
+  font-size: 0.82rem;
+}
+
 .story-list-item.active {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.12);
