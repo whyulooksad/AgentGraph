@@ -26,3 +26,6 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+servers/*/node_modules/
+servers/*/dist/
+servers/*/logs/
