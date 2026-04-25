@@ -1,0 +1,46 @@
+{
+  "diagram_name": "drawio_probe_sample",
+  "output_subdir": "drawio_probe",
+  "nodes": [
+    {
+      "id": "story",
+      "title": "Research Story",
+      "kind": "Rectangle",
+      "x": 40,
+      "y": 120,
+      "width": 140,
+      "height": 60
+    },
+    {
+      "id": "writer",
+      "title": "Section Writer",
+      "kind": "RoundedRectangle",
+      "x": 260,
+      "y": 120,
+      "width": 160,
+      "height": 70
+    },
+    {
+      "id": "drawio",
+      "title": "draw.io MCP",
+      "kind": "Cloud",
+      "x": 520,
+      "y": 120,
+      "width": 150,
+      "height": 80
+    }
+  ],
+  "edges": [
+    {
+      "from": "story",
+      "to": "writer",
+      "title": "contract context"
+    },
+    {
+      "from": "writer",
+      "to": "drawio",
+      "title": "materialize visual",
+      "dashed": true
+    }
+  ]
+}

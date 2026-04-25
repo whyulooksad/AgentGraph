@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Story2Proposal 的章节评审循环辅助函数。"""
 
+from pathlib import Path
 from typing import Any
 
 from schemas import AggregatedFeedback, ContractPatch, RevisionRecord
@@ -21,7 +22,8 @@ def aggregate_current_feedback(context: dict[str, Any]) -> dict[str, Any]:
     draft = (context.get("drafts") or {}).get(section_id, {})
     reviews = list((context.get("reviews") or {}).get(section_id, []))
 
-    return aggregate_feedback(section, draft, reviews)
+    output_dir = Path((context.get("artifacts") or {}).get("output_dir", ".")).resolve()
+    return aggregate_feedback(section, draft, reviews, output_dir=output_dir)
 
 
 def _rule_patch(rule_id: str, *, severity: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -50,7 +52,7 @@ def _derive_contract_evolution_patches(
                 params={"last_trigger_section": section_id, "rewrite_count": rewrite_count},
             )
         )
-    if checks.get("visual_references"):
+    if checks.get("visual_references") or checks.get("visual_artifact_integrity"):
         patches.append(
             _rule_patch(
                 "visual_reference_resolution",
@@ -92,7 +94,9 @@ def _should_use_visual_repair(
 ) -> bool:
     """判断当前 revise 是否属于可由局部 visual repair 解决的问题。"""
     deterministic_checks = aggregate.get("deterministic_checks", {})
-    visual_only_checks = bool(deterministic_checks.get("visual_references")) and not any(
+    visual_only_checks = bool(
+        deterministic_checks.get("visual_references") or deterministic_checks.get("visual_artifact_integrity")
+    ) and not any(
         deterministic_checks.get(name)
         for name in ("section_coverage", "citation_hygiene", "data_fidelity", "traceability")
     )

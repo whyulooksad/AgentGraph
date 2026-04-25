@@ -5,9 +5,11 @@ from __future__ import annotations
 import re
 from collections import Counter
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 from schemas import AggregatedFeedback, ContractPatch, RenderValidationReport
+from .visual_artifacts import validate_visual_artifact_integrity
 
 
 def tokens_in_text(text: str, prefix: str) -> list[str]:
@@ -24,7 +26,12 @@ def validate_section_coverage(section: dict[str, Any], draft: dict[str, Any]) ->
     return [f"Missing required claim coverage: {claim_id}" for claim_id in missing]
 
 
-def validate_visual_references(section: dict[str, Any], draft: dict[str, Any]) -> list[str]:
+def validate_visual_references(
+    section: dict[str, Any],
+    draft: dict[str, Any],
+    *,
+    output_dir: Path | None = None,
+) -> tuple[list[str], list[str]]:
     """检查必需的 visual 是否都被显式引用。"""
     content_ids = set(tokens_in_text(draft.get("content", ""), "FIG"))
     referenced_ids = set(draft.get("referenced_visual_ids", [])) | content_ids
@@ -38,7 +45,12 @@ def validate_visual_references(section: dict[str, Any], draft: dict[str, Any]) -
     for artifact_id in sorted(referenced_ids & set(section.get("required_visual_ids", []))):
         if artifact_id not in materialized_ids:
             issues.append(f"Referenced visual has no materialized artifact payload: {artifact_id}")
-    return issues
+    integrity_issues = (
+        validate_visual_artifact_integrity(output_dir, list(draft.get("visual_artifacts", [])))
+        if output_dir is not None
+        else []
+    )
+    return issues, integrity_issues
 
 
 def validate_citation_slots(section: dict[str, Any], draft: dict[str, Any]) -> tuple[list[str], list[dict[str, Any]]]:
@@ -159,6 +171,8 @@ def aggregate_feedback(
     section: dict[str, Any],
     draft: dict[str, Any],
     reviews: list[dict[str, Any]],
+    *,
+    output_dir: Path | None = None,
 ) -> dict[str, Any]:
     """聚合 evaluator 输出与确定性检查。"""
     status = "pass"
@@ -176,13 +190,14 @@ def aggregate_feedback(
         patches.extend(review.get("contract_patches", []))
 
     coverage_issues = validate_section_coverage(section, draft)
-    visual_issues = validate_visual_references(section, draft)
+    visual_issues, visual_integrity_issues = validate_visual_references(section, draft, output_dir=output_dir)
     citation_issues, citation_patches = validate_citation_slots(section, draft)
     fidelity_issues, fidelity_patches = validate_data_fidelity(section, draft)
     traceability_issues = validate_traceability(section, draft)
 
     issues.extend(coverage_issues)
     issues.extend(visual_issues)
+    issues.extend(visual_integrity_issues)
     issues.extend(citation_issues)
     issues.extend(fidelity_issues)
     issues.extend(traceability_issues)
@@ -200,6 +215,7 @@ def aggregate_feedback(
         deterministic_checks={
             "section_coverage": coverage_issues,
             "visual_references": visual_issues,
+            "visual_artifact_integrity": visual_integrity_issues,
             "citation_hygiene": citation_issues,
             "data_fidelity": fidelity_issues,
             "traceability": traceability_issues,

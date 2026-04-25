@@ -15,6 +15,7 @@ from llm_io import json_dumps
 from .contracts import apply_contract_patches
 from .rendering import build_bibliography_block
 from .validation import finalize_contract_after_render
+from .visual_artifacts import materialize_visual_artifacts
 from schemas import (
     BenchmarkSuiteReport,
     ContractPatch,
@@ -321,7 +322,13 @@ def save_section_draft(context: dict[str, Any], draft: SectionDraft) -> dict[str
             if section_id not in artifact["resolved_references"]:
                 artifact["resolved_references"].append(section_id)
             artifact["render_status"] = "registered"
-    for materialized in draft.visual_artifacts:
+    output_dir = Path(context.get("artifacts", {}).get("output_dir", ".")).resolve()
+    normalized_visuals = materialize_visual_artifacts(output_dir, draft.visual_artifacts)
+    context["drafts"][section_id]["visual_artifacts"] = [
+        item.model_dump(mode="json")
+        for item in normalized_visuals
+    ]
+    for materialized in normalized_visuals:
         for artifact in context.get("contract", {}).get("visuals", []):
             if artifact["artifact_id"] != materialized.artifact_id:
                 continue
