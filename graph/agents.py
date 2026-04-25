@@ -2,25 +2,27 @@ from __future__ import annotations
 
 """Story2Proposal agent definitions."""
 
-import sys
-
 from src import Agent, Hook
 
-from config import PACKAGE_ROOT, load_mcp_server, load_prompt
+from config import load_mcp_server, load_prompt
 
 
-def workflow_server_config() -> dict[str, object]:
-    """Return workflow MCP server launch config."""
-    return {
-        "command": sys.executable,
-        "args": ["-m", "servers.workflow"],
-        "cwd": str(PACKAGE_ROOT),
-    }
+def _required_mcp_server_config(name: str) -> dict[str, object]:
+    """Return one required MCP server config from repo-local `.mcp.json`."""
+    config = load_mcp_server(name)
+    if config is None:
+        raise RuntimeError(f"Missing MCP server config {name!r} in .mcp.json")
+    return config
 
 
 def drawio_server_config() -> dict[str, object] | None:
     """Return draw.io MCP config from repo-local `.mcp.json`."""
     return load_mcp_server("drawio")
+
+
+def workflow_server_config() -> dict[str, object]:
+    """Return workflow MCP config from repo-local `.mcp.json`."""
+    return _required_mcp_server_config("s2p_workflow")
 
 
 def _make_agent(
