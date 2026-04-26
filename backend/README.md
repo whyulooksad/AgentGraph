@@ -1,6 +1,6 @@
 # Story2Proposal Backend
 
-这个agent应用建立在我之前写的多 Agent 编排框架 **AgentGraph** 之上，源码就在仓库的`backend/src`目录下。如果想看runtime的底层设计，请直接看[src/README.md](/main/backend/src/README.md)。
+这个agent应用建立在我之前写的多 Agent 编排框架 **AgentGraph** 之上，源码就在仓库的`backend/src`目录下。如果想看runtime的底层设计，请直接看[backend/src/README.md](./src/README.md)。
 
 ## 一、系统架构
 
