@@ -1,10 +1,8 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-"""模型输出与结构化对象之间的轻量转换辅助函数。
+"""模型输出与结构化对象之间的转换工具。
 
-Story2Proposal 的多个 Agent 会被要求输出 JSON，这个文件负责从模型文本
-里提取 JSON 对象、校验成 Pydantic 模型，并在需要时把对象再格式化成
-字符串。
+这个文件负责提取 JSON、校验模型和格式化输出。
 """
 
 import json
@@ -18,8 +16,9 @@ T = TypeVar("T", bound=BaseModel)
 
 def extract_json_object(text: str) -> dict[str, Any]:
     """从模型文本中提取第一个可解析的 JSON 对象。"""
-    # 优先提取 ```json ... ``` 代码块；如果没有，再退回到正文中的对象。
+    # 优先提取代码块中的 JSON。
     fenced = re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.S)
+    # 如果没有代码块，再退回正文中的对象片段。
     candidates = fenced or re.findall(r"(\{.*\})", text, flags=re.S)
     for candidate in candidates:
         try:

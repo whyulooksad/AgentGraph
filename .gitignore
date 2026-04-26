@@ -1,8 +1,5 @@
 .env
 .mcp.json
-src/roadmap.md
-src/guide.md
-src/fix.md
 .idea/
 .playwright-mcp/
 .pycache_check/
@@ -11,21 +8,20 @@ __pycache__/
 **/__pycache__/
 *.pyc
 *.pyo
+*.log
+.DS_Store
+Thumbs.db
 .pytest_cache/
 .venv/
-data/outputs/
-idea.md
-plan.md
-Story2Proposal A Scaffold for Structured Scientific Paper Writing.pdf
-Story2Proposal A Scaffold for Structured Scientific Paper Writing.txt
-introduce.md
-story_io.md
-frontend/DESIGN.md
+backend/data/outputs/
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
-servers/*/node_modules/
-servers/*/dist/
-servers/*/logs/
+backend/servers/*/node_modules/
+backend/servers/*/dist/
+backend/servers/*/logs/
+backend/servers/*/tmp/
+backend/guide.md
+

@@ -1,6 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-"""Story2Proposal application entrypoint."""
+"""Story2Proposal 的应用层运行入口。
+
+这个文件负责执行一次完整运行。
+"""
 
 import asyncio
 from datetime import datetime
@@ -19,15 +22,18 @@ async def run_story_to_proposal(
     *,
     model: str = DEFAULT_MODEL,
 ) -> dict[str, Any]:
-    """Run one Story2Proposal job asynchronously."""
+    """异步执行一次完整的 Story2Proposal 运行。"""
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     resolved_output = output_dir or (OUTPUTS_DIR / f"{story.story_id}_{run_id}")
+
+    # 准备本次运行的输出目录。
     resolved_output.mkdir(parents=True, exist_ok=True)
     (resolved_output / "drafts").mkdir(exist_ok=True)
     (resolved_output / "reviews").mkdir(exist_ok=True)
     (resolved_output / "rendered").mkdir(exist_ok=True)
     (resolved_output / "logs").mkdir(exist_ok=True)
 
+    # 初始化共享状态。
     context = build_initial_context(story, resolved_output)
     graph = build_story2proposal_graph(model=model)
     try:
@@ -44,8 +50,10 @@ async def run_story_to_proposal(
             context=context,
         )
     finally:
+        # 主动关闭 MCP 连接。
         await graph._mcp_manager.close()
 
+    # 只有在最终稿生成后才执行整篇评测。
     if context.get("artifacts", {}).get("rendered") is not None:
         evaluate_and_store_manuscript(context)
 
@@ -59,5 +67,5 @@ def run_story_to_proposal_sync(
     *,
     model: str = DEFAULT_MODEL,
 ) -> dict[str, Any]:
-    """Synchronous wrapper for scripts and subprocess entrypoints."""
+    """为脚本和子进程入口提供同步封装。"""
     return asyncio.run(run_story_to_proposal(story, output_dir=output_dir, model=model))
