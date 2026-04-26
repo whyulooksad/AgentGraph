@@ -24,16 +24,5 @@ dependencies = [
 
 [tool.hatch.build.targets.wheel]
 only-include = [
-    "api",
-    "src",
-    "schemas",
-    "domain",
-    "graph",
-    "servers",
-    "scripts",
-    "config.py",
-    "llm_io.py",
-    "runner.py",
-    "prompts",
-    "data/stories",
+    "backend",
 ]

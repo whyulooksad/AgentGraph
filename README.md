@@ -79,53 +79,25 @@
 ## 三、代码结构
 ```text
 Story2Proposal/
-├── api/                      # FastAPI 接口层
-│   ├── server.py             # API 入口与路由定义
-│   ├── repository.py         # story / run 的文件读写与聚合逻辑
-│   └── models.py             # run 相关请求与响应模型
+├── backend/                  # 后端主目录
+│   ├── api/                  # FastAPI 接口层
+│   ├── domain/               # 核心业务逻辑
+│   ├── graph/                # Agent 图定义与装配
+│   ├── schemas/              # 结构化对象定义
+│   ├── servers/              # workflow / MCP 相关服务
+│   ├── scripts/              # 后端脚本入口
+│   ├── src/                  # AgentGraph runtime
+│   ├── prompts/              # Agent prompts
+│   ├── data/                 # stories / outputs
+│   ├── config.py             # 后端路径与配置
+│   ├── llm_io.py             # LLM 结构化读写
+│   └── runner.py             # 后端运行入口
 ├── frontend/                 # 前端运行工作台
-├── runner.py                 # 应用层主运行入口，负责串起一次完整 run
-├── config.py                 # 路径、.env 与默认模型配置
-├── llm_io.py                 # 模型文本与结构化对象之间的解析 / 转换
 ├── README.md                 # 本文档
 ├── AGENTS.md                 # Story2Proposal Agent 的共享约束说明
 ├── .env                      # 环境变量配置
 ├── pyproject.toml            # 项目依赖与包配置
-├── data/                     # 输入故事与运行产物
-│   ├── stories/              # 输入 ResearchStory
-│   └── outputs/              # 每次运行生成的输出目录
-├── prompts/                  # 各个 Agent 使用的 prompt
-│   ├── architect.md
-│   ├── section_writer.md
-│   ├── reasoning_evaluator.md
-│   ├── data_fidelity_evaluator.md
-│   ├── visual_evaluator.md
-│   ├── review_controller.md
-│   ├── refiner.md
-│   └── renderer.md
-├── schemas/                  # 应用层结构化对象定义
-│   ├── story.py              # ResearchStory 定义
-│   ├── blueprint.py          # blueprint 定义
-│   ├── contract.py           # manuscript contract 定义
-│   ├── draft.py              # draft / rendered manuscript 定义
-│   └── review.py             # review / contract patch 定义
-├── domain/                   # 应用层核心业务逻辑
-│   ├── state.py              # 共享 context 的初始化、投影与落盘
-│   ├── contracts.py          # contract 初始化与 patch 应用
-│   ├── review.py             # review 聚合、检查与流程推进
-│   └── rendering.py          # 最终 markdown / LaTeX 渲染
-├── graph/                    # Agent 图定义与节点装配
-│   ├── build.py              # 主流程图定义
-│   └── agents.py             # 各个 Agent 的构造、prompt 与 hook 挂载
-├── servers/                  # 应用层 workflow server
-│   └── workflow.py           # hook 入口：负责把 Agent 输出写回共享状态
-├── scripts/                  # 脚本入口
-│   └── run_demo.py           # demo 运行脚本
-└── src/                      # 底层 AgentGraph runtime
-    ├── agent.py
-    ├── edge.py
-    ├── hook.py
-    ├── nodes.py
+└── backend/                  # 唯一后端源码位置
     ├── mcp_manager.py
     ├── mcp_server.py
     ├── memory.py
@@ -198,7 +170,7 @@ STORY2PROPOSAL_MODEL=qwen-plus
 
 ```powershell
 cd E:\Work\Story2Proposal
-uv run python -m api.server
+uv run python -m backend.api.server
 ```
 
 再开前端：

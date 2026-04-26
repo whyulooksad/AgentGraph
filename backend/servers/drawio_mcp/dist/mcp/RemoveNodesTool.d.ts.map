@@ -1,0 +1,1 @@
+{"version":3,"file":"RemoveNodesTool.d.ts","sourceRoot":"","sources":["../../src/mcp/RemoveNodesTool.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,gBAAgB,EAAE,MAAM,wBAAwB,CAAC;AAE1D,OAAO,EAAE,IAAI,EAAE,MAAM,gBAAgB,CAAC;AAEtC,qBAAa,eAAgB,YAAW,IAAI;IAC9B,OAAO,CAAC,WAAW;gBAAX,WAAW,mBAA2B;IAE1D,MAAM;;;;;;;;;;;;;;;;;;;;;;IAyBA,OAAO,CAAC,EAAE,SAAS,EAAE,GAAG,EAAE;;;KAAA;;;;;;CAoBjC"}

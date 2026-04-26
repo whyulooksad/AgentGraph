@@ -1,0 +1,109 @@
+{
+  "contract_id": "probe_adaptive_graph_writer_section_writer_probe_20260426_021021",
+  "version": 1,
+  "paper_title": "Adaptive Graph Writer",
+  "target_venue": null,
+  "style_guide": {
+    "tone": "scientific",
+    "citation_style": "author-year placeholder",
+    "section_style": "structured",
+    "figure_policy": "use explicit placeholders until real figures are available",
+    "output_language": "en"
+  },
+  "sections": [
+    {
+      "section_id": "method",
+      "title": "Method",
+      "purpose": "Describe the system pipeline and include the required overview figure.",
+      "required_claims": [],
+      "required_claim_ids": [],
+      "claim_requirements": [],
+      "required_evidence_ids": [],
+      "required_visual_ids": [
+        "fig_method_pipeline"
+      ],
+      "required_citation_ids": [],
+      "depends_on_sections": [],
+      "source_story_fields": [
+        "core_idea",
+        "method_summary"
+      ],
+      "visual_obligations": [
+        {
+          "artifact_id": "fig_method_pipeline",
+          "required": true,
+          "explanation_required": true,
+          "placement_hint": "after the first paragraph",
+          "narrative_role": "pipeline overview"
+        }
+      ],
+      "citation_obligations": [],
+      "status": "drafted",
+      "draft_path": "drafts/method_v1.md",
+      "latest_draft_version": 1
+    }
+  ],
+  "visuals": [
+    {
+      "artifact_id": "fig_method_pipeline",
+      "kind": "figure",
+      "label": "Figure 1",
+      "canonical_label": "fig:method_pipeline",
+      "caption_brief": "Pipeline overview of the Story2Proposal writing system.",
+      "semantic_role": "pipeline overview",
+      "source_evidence_ids": [],
+      "target_sections": [
+        "method"
+      ],
+      "placement_hint": "after the first paragraph",
+      "placement_constraint": "inline",
+      "occurrence_policy": "exactly_once",
+      "explanation_required": true,
+      "materialization_status": "materialized",
+      "generator": "drawio",
+      "source_path": "figures/fig_method_pipeline.drawio.svg",
+      "rendered_path": "figures/fig_method_pipeline.svg",
+      "thumbnail_path": "figures/fig_method_pipeline.thumb.png",
+      "object_map": [
+        {
+          "object_id": "contract_activation",
+          "label": "Contract Activation",
+          "role": "pipeline_stage"
+        },
+        {
+          "object_id": "adaptive_generation",
+          "label": "Adaptive Generation",
+          "role": "pipeline_stage"
+        },
+        {
+          "object_id": "obligation_aware_rendering",
+          "label": "Obligation-Aware Rendering",
+          "role": "pipeline_stage"
+        },
+        {
+          "object_id": "drawio_mcp",
+          "label": "draw.io MCP",
+          "role": "tool"
+        }
+      ],
+      "resolved_references": [
+        "method"
+      ],
+      "render_status": "registered"
+    }
+  ],
+  "citations": [],
+  "glossary": [],
+  "claim_evidence_links": [],
+  "validation_rules": [],
+  "revision_log": [],
+  "global_status": {
+    "state": "drafted",
+    "current_section_id": "method",
+    "completed_sections": [],
+    "pending_sections": [
+      "method"
+    ],
+    "warnings": []
+  }
+}

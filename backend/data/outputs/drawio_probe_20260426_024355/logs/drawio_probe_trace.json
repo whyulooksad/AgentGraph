@@ -1,0 +1,124 @@
+{
+  "available_tools": [
+    "mcp__drawio__add_nodes",
+    "mcp__drawio__edit_nodes",
+    "mcp__drawio__get_diagram_info",
+    "mcp__drawio__link_nodes",
+    "mcp__drawio__new_diagram",
+    "mcp__drawio__remove_nodes"
+  ],
+  "invoked_tools": [
+    {
+      "name": "mcp__drawio__new_diagram",
+      "arguments": {
+        "file_path": "E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg"
+      },
+      "result": {
+        "structuredContent": null,
+        "content": [
+          {
+            "text": "Created new diagram: E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      }
+    },
+    {
+      "name": "mcp__drawio__add_nodes",
+      "arguments": {
+        "file_path": "E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg",
+        "nodes": [
+          {
+            "id": "story",
+            "title": "Research Story",
+            "kind": "Rectangle",
+            "x": 40.0,
+            "y": 120.0,
+            "width": 140.0,
+            "height": 60.0
+          },
+          {
+            "id": "writer",
+            "title": "Section Writer",
+            "kind": "RoundedRectangle",
+            "x": 260.0,
+            "y": 120.0,
+            "width": 160.0,
+            "height": 70.0
+          },
+          {
+            "id": "drawio",
+            "title": "draw.io MCP",
+            "kind": "Cloud",
+            "x": 520.0,
+            "y": 120.0,
+            "width": 150.0,
+            "height": 80.0
+          }
+        ]
+      },
+      "result": {
+        "structuredContent": null,
+        "content": [
+          {
+            "text": "Nodes added to E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      }
+    },
+    {
+      "name": "mcp__drawio__link_nodes",
+      "arguments": {
+        "file_path": "E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg",
+        "edges": [
+          {
+            "from": "story",
+            "to": "writer",
+            "title": "contract context",
+            "dashed": false,
+            "reverse": false,
+            "undirected": false
+          },
+          {
+            "from": "writer",
+            "to": "drawio",
+            "title": "materialize visual",
+            "dashed": true,
+            "reverse": false,
+            "undirected": false
+          }
+        ]
+      },
+      "result": {
+        "structuredContent": null,
+        "content": [
+          {
+            "text": "Linked nodes in E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      }
+    },
+    {
+      "name": "mcp__drawio__get_diagram_info",
+      "arguments": {
+        "file_path": "E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg"
+      },
+      "result": {
+        "structuredContent": null,
+        "content": [
+          {
+            "text": "Graph xml representation: \n<mxGraphModel>\n  <root>\n    <mxCell id=\"0\" />\n    <mxCell id=\"1\" parent=\"0\" />\n    <mxCell id=\"story\" value=\"Research Story\" parent=\"1\" vertex=\"1\">\n      <mxGeometry x=\"40\" y=\"120\" width=\"140\" height=\"60\" as=\"geometry\" />\n      <Object rounded=\"1\" whiteSpace=\"wrap\" html=\"1\" as=\"style\" />\n    </mxCell>\n    <mxCell id=\"writer\" value=\"Section Writer\" style=\"whiteSpace=wrap;html=1;rounded=1;absoluteArcSize=1;arcSize=24;\" parent=\"1\" vertex=\"1\">\n      <mxGeometry x=\"260\" y=\"120\" width=\"160\" height=\"70\" as=\"geometry\" />\n    </mxCell>\n    <mxCell id=\"drawio\" value=\"draw.io MCP\" style=\"ellipse;shape=cloud;whiteSpace=wrap;html=1;\" parent=\"1\" vertex=\"1\">\n      <mxGeometry x=\"520\" y=\"120\" width=\"150\" height=\"80\" as=\"geometry\" />\n    </mxCell>\n    <mxCell id=\"story-2-writer\" value=\"contract context\" style=\"edgeStyle=none;noEdgeStyle=1;orthogonal=1;html=1;\" parent=\"1\" source=\"story\" target=\"writer\" edge=\"1\">\n      <mxGeometry relative=\"1\" as=\"geometry\" />\n    </mxCell>\n    <mxCell id=\"writer-2-drawio\" value=\"materialize visual\" style=\"edgeStyle=none;noEdgeStyle=1;orthogonal=1;html=1;dashed=1;\" parent=\"1\" source=\"writer\" target=\"drawio\" edge=\"1\">\n      <mxGeometry relative=\"1\" as=\"geometry\" />\n    </mxCell>\n  </root>\n</mxGraphModel>\n",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      }
+    }
+  ],
+  "diagram_path": "E:\\Work\\Story2Proposal\\data\\outputs\\drawio_probe_20260426_024355\\drawio_probe_sample.drawio.svg"
+}

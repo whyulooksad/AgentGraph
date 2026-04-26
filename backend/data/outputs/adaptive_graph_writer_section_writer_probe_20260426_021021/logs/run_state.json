@@ -1,0 +1,23 @@
+{
+  "runtime": {
+    "current_section_id": "method",
+    "pending_sections": [
+      "method"
+    ],
+    "completed_sections": [],
+    "rewrite_count": {
+      "method": 0
+    },
+    "max_rewrite_per_section": 3,
+    "final_status": null,
+    "current_draft_version": 1,
+    "needs_manual_review": [],
+    "next_node": null,
+    "section_writer_mode": "compose",
+    "section_writer_plan": {}
+  },
+  "artifacts": {
+    "last_aggregate_feedback": null,
+    "next_action": null
+  }
+}

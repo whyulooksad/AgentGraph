@@ -1,0 +1,1 @@
+{"version":3,"file":"installGlobals.d.ts","sourceRoot":"","sources":["../../src/mxgraph/installGlobals.ts"],"names":[],"mappings":"AA4BA,MAAM,MAAM,aAAa,GAAG;IAC1B,QAAQ,EAAE,QAAQ,CAAC;IACnB,aAAa,EAAE,OAAO,UAAU,CAAC,aAAa,CAAC;IAC/C,SAAS,EAAE,SAAS,CAAC;IACrB,QAAQ,EAAE,QAAQ,CAAC;IACnB,SAAS,EAAE,OAAO,UAAU,CAAC,SAAS,CAAC;CACxC,CAAC;AAEF,wBAAgB,iBAAiB,CAAC,MAAM,EAAE,aAAa,QAOtD"}

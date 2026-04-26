@@ -1,0 +1,39 @@
+{
+  "status": "pass",
+  "issues": [],
+  "deterministic_checks": {
+    "section_coverage": [],
+    "visual_references": [],
+    "citation_hygiene": [],
+    "data_fidelity": [],
+    "traceability": []
+  },
+  "contract_patches": [],
+  "covered_claim_ids": [],
+  "missing_required_claim_ids": [],
+  "referenced_visual_ids": [
+    "fig_method_pipeline"
+  ],
+  "missing_required_visual_ids": [],
+  "materialized_visual_ids": [
+    "fig_method_pipeline"
+  ],
+  "unmaterialized_required_visual_ids": [],
+  "referenced_citation_ids": [],
+  "missing_required_citation_ids": [],
+  "unresolved_items": [],
+  "invoked_tool_names": [],
+  "used_drawio_tool": false,
+  "drawio_artifact_ids": [
+    "fig_method_pipeline"
+  ],
+  "contract_visual_status": {
+    "fig_method_pipeline": {
+      "materialization_status": "materialized",
+      "render_status": "registered",
+      "generator": "drawio",
+      "source_path": "figures/fig_method_pipeline.drawio.svg",
+      "rendered_path": "figures/fig_method_pipeline.svg"
+    }
+  }
+}
